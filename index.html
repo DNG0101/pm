@@ -979,7 +979,30 @@ function switchSidebar(id){
   document.getElementById('sp-'+id)?.classList.add('active');
 }
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
-function toggleHistoryRecording(){
+function quickToggleCORS(){
+  APP.settings.corsProxy = !APP.settings.corsProxy;
+  if(!APP.settings.proxyUrl){
+    APP.settings.proxyUrl = 'https://square-credit-8186.donthulanithish53.workers.dev/?url=';
+  }
+  saveState();
+  updateCORSBtn();
+  notify(APP.settings.corsProxy ? '⚡ CORS Proxy ENABLED! Requests will now work.' : '🔴 CORS Proxy disabled.', APP.settings.corsProxy ? 'success' : 'info');
+}
+function updateCORSBtn(){
+  const btn = document.getElementById('cors-toggle-btn');
+  if(!btn) return;
+  if(APP.settings.corsProxy){
+    btn.textContent = '⚡ CORS: ON';
+    btn.style.background = 'rgba(76,175,136,0.2)';
+    btn.style.color = 'var(--ok)';
+    btn.style.borderColor = 'var(--ok)';
+  } else {
+    btn.textContent = '⚡ CORS: OFF';
+    btn.style.background = 'rgba(239,83,80,0.15)';
+    btn.style.color = 'var(--err)';
+    btn.style.borderColor = 'var(--err)';
+  }
+}
   const on=document.getElementById('history-toggle').checked;
   APP.settings.historyEnabled=on;
   saveState();
@@ -1513,6 +1536,7 @@ function init(){
     }
   });
   document.getElementById('method-select').addEventListener('change',methodChanged);
+  updateCORSBtn();
 }
 init();
 </script>
