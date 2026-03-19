@@ -256,7 +256,8 @@ tr:hover .kv-del{opacity:1;}
     <button class="btn-icon" title="WebSocket" onclick="openWSModal()">⚡</button>
     <button class="btn-icon" title="Environments" onclick="openEnvModal()">🌍</button>
     <button class="btn-icon" title="Import" onclick="openImportModal()">⬆</button>
-    <button class="btn-icon" title="Settings" onclick="openSettingsModal()">⚙</button>
+    <button id="cors-toggle-btn" onclick="quickToggleCORS()" title="Click to Enable/Disable CORS Proxy" style="padding:0 10px;height:32px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.3px;transition:.15s;border:1px solid var(--border);">⚡ CORS: OFF</button>
+<button class="btn-icon" title="Settings" onclick="openSettingsModal()">⚙</button>
   </div>
 </div>
 <div id="main">
