@@ -115,10 +115,25 @@ select option{background:var(--bg2);}
 .request-name{font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* History items */
-.history-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;transition:.15s;}
+.history-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;transition:.15s;position:relative;}
 .history-item:hover{background:var(--bg3);}
+.history-item.pinned{background:rgba(255,108,55,0.07);border-left:2px solid var(--accent);}
 .history-url{font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);}
-.history-time{font-size:10px;color:var(--text3);}
+.history-time{font-size:10px;color:var(--text3);flex-shrink:0;}
+.history-actions{display:flex;gap:2px;opacity:0;transition:.15s;flex-shrink:0;}
+.history-item:hover .history-actions{opacity:1;}
+.h-btn{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:.15s;}
+.h-btn:hover{background:var(--bg4);}
+.h-pin{color:var(--text3);}
+.h-pin.active{color:var(--accent);}
+.h-del{color:var(--err);}
+/* History toggle */
+.history-toggle-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--border-dim);background:var(--bg0);}
+.history-toggle-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;}
+.history-record-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:4px;display:inline-block;}
+.history-record-dot.off{background:var(--text3);}
+.history-pinned-section{padding:6px 8px 2px;font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.8px;}
+.history-all-section{padding:6px 8px 2px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.8px;}
 
 /* Environments */
 .env-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius);cursor:pointer;transition:.15s;margin-bottom:2px;}
@@ -378,10 +393,18 @@ tr:hover .kv-del{opacity:1;}
       </div>
       <!-- History -->
       <div class="sidebar-panel" id="sp-history">
-        <div class="sidebar-actions">
-          <button class="btn-sm btn-danger" onclick="clearHistory()">Clear All</button>
+        <div class="history-toggle-bar">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="history-record-dot" id="history-dot"></span>
+            <span class="history-toggle-label">RECORD HISTORY</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="history-toggle" onchange="toggleHistoryRecording()" checked><span class="toggle-slider"></span></label>
         </div>
-        <div class="sidebar-list" id="history-list"></div>
+        <div class="sidebar-actions" style="border-bottom:1px solid var(--border-dim);">
+          <button class="btn-sm btn-danger" onclick="clearHistory()" title="Delete all history">🗑 Clear All</button>
+          <button class="btn-sm" onclick="clearPinnedHistory()" title="Unpin all">📌 Unpin All</button>
+        </div>
+        <div class="sidebar-list" id="history-list" style="padding:4px 4px;"></div>
       </div>
       <!-- Environments -->
       <div class="sidebar-panel" id="sp-envs">
@@ -1407,33 +1430,99 @@ function toggleSidebar() {
 // ============================================================
 // HISTORY
 // ============================================================
+function toggleHistoryRecording() {
+  const on = document.getElementById('history-toggle').checked;
+  APP.settings.historyEnabled = on;
+  saveState();
+  const dot = document.getElementById('history-dot');
+  if(dot) { dot.className = 'history-record-dot' + (on ? '' : ' off'); }
+  notify(on ? 'History recording ON' : 'History recording OFF', 'info');
+}
+
 function addToHistory(entry) {
+  if (APP.settings.historyEnabled === false) return; // OFF switch
   entry.id = uid();
   entry.at = new Date().toLocaleTimeString();
+  entry.pinned = false;
   APP.history.unshift(entry);
   if(APP.history.length>200) APP.history.pop();
   saveState();
   renderHistory();
 }
+
 function renderHistory() {
   const list = document.getElementById('history-list');
-  if (!APP.history.length) { list.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>No history yet.</p></div>'; return; }
-  list.innerHTML = APP.history.map(h=>`
-    <div class="history-item" onclick="loadFromHistory('${h.id}')">
-      <span class="method-badge m-${h.method}">${h.method}</span>
-      <span class="history-url">${escHtml(h.url)}</span>
+  const toggle = document.getElementById('history-toggle');
+  const dot = document.getElementById('history-dot');
+  const isOn = APP.settings.historyEnabled !== false;
+  if(toggle) toggle.checked = isOn;
+  if(dot) dot.className = 'history-record-dot' + (isOn ? '' : ' off');
+
+  if (!APP.history.length) {
+    list.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>No history yet.</p></div>';
+    return;
+  }
+
+  const pinned = APP.history.filter(h=>h.pinned);
+  const unpinned = APP.history.filter(h=>!h.pinned);
+
+  const renderItem = (h) => `
+    <div class="history-item ${h.pinned?'pinned':''}" onclick="loadFromHistory('${h.id}')">
+      <span class="method-badge m-${h.method}" style="flex-shrink:0">${h.method}</span>
+      <span class="history-url" title="${escHtml(h.url)}">${escHtml(h.url)}</span>
       <span class="history-time">${h.at}</span>
-    </div>`).join('');
+      <div class="history-actions" onclick="event.stopPropagation()">
+        <button class="h-btn h-pin ${h.pinned?'active':''}" title="${h.pinned?'Unpin':'Pin'}" onclick="togglePin('${h.id}')">${h.pinned?'📌':'📌'}</button>
+        <button class="h-btn h-del" title="Delete" onclick="deleteHistoryItem('${h.id}')">🗑</button>
+      </div>
+    </div>`;
+
+  let html = '';
+  if (pinned.length) {
+    html += '<div class="history-pinned-section">📌 PINNED</div>';
+    html += pinned.map(renderItem).join('');
+    if (unpinned.length) html += '<div class="history-all-section">RECENT</div>';
+  }
+  html += unpinned.map(renderItem).join('');
+  list.innerHTML = html;
 }
+
+function togglePin(id) {
+  const h = APP.history.find(x=>x.id===id);
+  if(!h) return;
+  h.pinned = !h.pinned;
+  // Move pinned to top, keep order
+  APP.history.sort((a,b) => (b.pinned?1:0)-(a.pinned?1:0));
+  saveState();
+  renderHistory();
+  notify(h.pinned ? 'Request pinned! 📌' : 'Unpinned', 'info');
+}
+
+function deleteHistoryItem(id) {
+  APP.history = APP.history.filter(x=>x.id!==id);
+  saveState();
+  renderHistory();
+}
+
 function loadFromHistory(id) {
   const h = APP.history.find(x=>x.id===id);
   if (!h) return;
   newTab({method:h.method, url:h.url, name:h.url});
 }
+
 function clearHistory() {
+  if(!confirm('Delete ALL history? Pinned items will also be removed.')) return;
   APP.history=[];
   saveState();
   renderHistory();
+  notify('History cleared', 'info');
+}
+
+function clearPinnedHistory() {
+  APP.history.forEach(h=>h.pinned=false);
+  saveState();
+  renderHistory();
+  notify('All items unpinned', 'info');
 }
 
 // ============================================================
@@ -2015,7 +2104,7 @@ function openSettingsModal() {
               <div><div class="settings-label">Enable CORS Proxy</div><div class="settings-desc">Route requests through a CORS proxy to bypass browser restrictions</div></div>
               <label class="toggle"><input type="checkbox" id="set-cors" ${s.corsProxy?'checked':''}><span class="toggle-slider"></span></label>
             </div>
-            <div class="form-group" style="margin-top:10px"><label>PROXY URL</label><input id="set-proxy-url" value="${s.proxyUrl: APP.settings?.proxyUrl || 'https://postmanweb-proxy.YOUR_SUBDOMAIN.workers.dev/?url=https://square-credit-8186.donthulanithish53.workers.dev'}" placeholder="https://corsproxy.io/?"></div>
+            <div class="form-group" style="margin-top:10px"><label>PROXY URL</label><input id="set-proxy-url" value="${s.proxyUrl||'https://corsproxy.io/?'}" placeholder="https://corsproxy.io/?"></div>
           </div>
           <div class="settings-section">
             <div class="settings-title">Global Variables</div>
