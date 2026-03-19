@@ -6,315 +6,28 @@
 <title>PostmanWeb – Full API Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{--bg0:#0d0d14;--bg1:#13131f;--bg2:#1a1a2a;--bg3:#222236;--bg4:#2a2a42;--border:#2e2e4a;--border-dim:#1e1e30;--accent:#ff6c37;--accent2:#ff8c57;--accent-bg:rgba(255,108,55,0.12);--text1:#eeeef8;--text2:#9999bb;--text3:#55556a;--get:#61affe;--post:#49cc90;--put:#fca130;--patch:#50e3c2;--delete:#f93e3e;--head:#9012fe;--options:#aaaacc;--ok:#4caf88;--err:#ef5350;--warn:#ffb347;--info:#64b5f6;--radius:6px;--sidebar-w:260px;}
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;}
-body{font-family:'Syne',sans-serif;background:var(--bg0);color:var(--text1);font-size:13px;display:flex;flex-direction:column;}
-code,pre,textarea.code{font-family:'JetBrains Mono',monospace;}
-::-webkit-scrollbar{width:6px;height:6px;}
-::-webkit-scrollbar-track{background:var(--bg1);}
-::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
-button{cursor:pointer;border:none;background:none;color:inherit;font-family:inherit;font-size:inherit;}
-input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;outline:none;}
-input:focus,textarea:focus,select:focus{border-color:var(--accent);}
-select{cursor:pointer;}
-select option{background:var(--bg2);}
-
-/* TOPBAR */
-#topbar{height:44px;background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0;z-index:100;}
-.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:var(--accent);letter-spacing:-0.5px;margin-right:4px;flex-shrink:0;}
-.logo svg{width:24px;height:24px;}
-#tabs-bar{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none;min-width:0;}
-#tabs-bar::-webkit-scrollbar{display:none;}
-.tab-item{display:flex;align-items:center;gap:8px;padding:0 10px 0 12px;height:32px;background:var(--bg2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--border);border-bottom:none;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s;}
-.tab-item:hover{background:var(--bg3);}
-.tab-item.active{background:var(--bg0);}
-.tab-method{font-size:9px;font-weight:800;letter-spacing:.5px;}
-.tab-name{max-width:110px;overflow:hidden;text-overflow:ellipsis;font-size:11px;}
-.tab-close{opacity:0;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;transition:.15s;}
-.tab-item:hover .tab-close,.tab-item.active .tab-close{opacity:1;}
-.tab-close:hover{background:var(--bg4);}
-#btn-new-tab{padding:0 10px;height:32px;border-radius:var(--radius);color:var(--text2);font-size:16px;flex-shrink:0;}
-#btn-new-tab:hover{background:var(--bg3);color:var(--text1);}
-.topbar-right{display:flex;gap:6px;align-items:center;flex-shrink:0;}
-.btn-icon{width:32px;height:32px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;transition:.15s;}
-.btn-icon:hover{background:var(--bg3);color:var(--text1);}
-#cors-toggle-btn{padding:0 12px;height:32px;border-radius:var(--radius);font-size:11px;font-weight:700;letter-spacing:.3px;transition:all .2s;border:1px solid var(--err);background:rgba(239,83,80,0.15);color:var(--err);flex-shrink:0;}
-
-/* LAYOUT */
-#main{display:flex;flex:1;overflow:hidden;}
-
-/* SIDEBAR */
-#sidebar{width:var(--sidebar-w);background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s;overflow:hidden;}
-#sidebar.collapsed{width:0;}
-#sidebar-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
-.sidebar-tab{flex:1;padding:10px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;letter-spacing:.5px;}
-.sidebar-tab:hover{color:var(--text2);}
-.sidebar-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
-#sidebar-content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-.sidebar-panel{display:none;flex:1;overflow:hidden;flex-direction:column;}
-.sidebar-panel.active{display:flex;}
-.sidebar-search{padding:10px;border-bottom:1px solid var(--border-dim);}
-.sidebar-search input{width:100%;}
-.sidebar-actions{padding:8px 10px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border-dim);}
-.btn-sm{padding:5px 10px;border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:11px;font-weight:600;transition:.15s;}
-.btn-sm:hover{background:var(--bg4);color:var(--text1);}
-.btn-accent{background:var(--accent-bg);color:var(--accent);}
-.btn-accent:hover{background:var(--accent);color:#fff;}
-.btn-danger-sm{background:rgba(239,83,80,0.15);color:var(--err);}
-.btn-danger-sm:hover{background:var(--err);color:#fff;}
-.sidebar-list{flex:1;overflow-y:auto;padding:6px;}
-
-/* COLLECTIONS */
-.collection-item{border-radius:var(--radius);margin-bottom:3px;}
-.collection-header{display:flex;align-items:center;gap:8px;padding:7px 8px;cursor:pointer;border-radius:var(--radius);}
-.collection-header:hover{background:var(--bg3);}
-.collection-toggle{width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);transition:transform .2s;flex-shrink:0;}
-.collection-toggle.open{transform:rotate(90deg);}
-.collection-name{flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.collection-menu{opacity:0;transition:.15s;display:flex;gap:3px;flex-shrink:0;}
-.collection-header:hover .collection-menu{opacity:1;}
-.collection-requests{display:none;padding-left:16px;}
-.collection-requests.open{display:block;}
-.request-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:var(--radius);cursor:pointer;transition:.15s;}
-.request-item:hover{background:var(--bg3);}
-.method-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:.5px;flex-shrink:0;}
-.m-GET{color:var(--get);}
-.m-POST{color:var(--post);}
-.m-PUT{color:var(--put);}
-.m-PATCH{color:var(--patch);}
-.m-DELETE{color:var(--delete);}
-.m-HEAD{color:var(--head);}
-.m-OPTIONS{color:var(--options);}
-.request-name{font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.req-actions{opacity:0;display:flex;gap:2px;transition:.15s;}
-.request-item:hover .req-actions{opacity:1;}
-
-/* HISTORY */
-.history-toggle-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--border-dim);flex-shrink:0;}
-.history-toggle-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
-.history-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;}
-.history-dot.off{background:var(--text3);}
-.history-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;transition:.15s;position:relative;}
-.history-item:hover{background:var(--bg3);}
-.history-item.pinned{background:rgba(255,108,55,0.08);border-left:2px solid var(--accent);}
-.history-url{font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);}
-.history-time{font-size:10px;color:var(--text3);flex-shrink:0;}
-.history-actions{display:flex;gap:2px;opacity:0;transition:.15s;flex-shrink:0;}
-.history-item:hover .history-actions{opacity:1;}
-.h-btn{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:.15s;}
-.h-btn:hover{background:var(--bg4);}
-.h-pin{color:var(--text3);}
-.h-pin.is-pinned{color:var(--accent);}
-.h-del{color:var(--err);}
-.hist-lbl{padding:5px 8px 2px;font-size:10px;font-weight:700;letter-spacing:.8px;}
-.hist-lbl.pin-lbl{color:var(--accent);}
-.hist-lbl.rec-lbl{color:var(--text3);}
-
-/* ENVIRONMENTS */
-.env-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius);cursor:pointer;transition:.15s;margin-bottom:2px;}
-.env-item:hover{background:var(--bg3);}
-.env-item.active-env{background:var(--accent-bg);}
-.env-name{flex:1;font-size:12px;font-weight:600;}
-.env-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;}
-.env-dot.active{background:var(--ok);}
-
-/* WORKSPACE */
-#workspace{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
-#url-bar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;align-items:center;}
-#method-select{width:115px;font-weight:700;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;color:var(--get);}
-#url-input{flex:1;font-family:'JetBrains Mono',monospace;font-size:13px;min-width:0;}
-#url-input::placeholder{color:var(--text3);}
-#btn-send{padding:7px 22px;background:var(--accent);color:#fff;border-radius:var(--radius);font-weight:700;font-size:13px;transition:.15s;white-space:nowrap;flex-shrink:0;}
-#btn-send:hover{background:var(--accent2);}
-#btn-send:disabled{background:var(--bg4);cursor:not-allowed;}
-#btn-cancel{padding:7px 14px;background:rgba(239,83,80,0.2);color:var(--err);border-radius:var(--radius);font-weight:600;font-size:12px;transition:.15s;display:none;flex-shrink:0;}
-#btn-cancel:hover{background:var(--err);color:#fff;}
-#btn-save-req{padding:7px 14px;background:var(--bg3);color:var(--text2);border-radius:var(--radius);font-weight:600;font-size:12px;transition:.15s;flex-shrink:0;}
-#btn-save-req:hover{background:var(--bg4);color:var(--text1);}
-
-/* SPLIT */
-#split-wrap{display:flex;flex:1;flex-direction:column;overflow:hidden;}
-#req-panels{display:flex;flex-direction:column;overflow:hidden;}
-.panel-tabs{display:flex;gap:2px;padding:0 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg1);overflow-x:auto;}
-.panel-tabs::-webkit-scrollbar{display:none;}
-.panel-tab{padding:9px 12px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap;flex-shrink:0;}
-.panel-tab:hover{color:var(--text2);}
-.panel-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
-.badge{display:inline-block;background:var(--accent-bg);color:var(--accent);border-radius:8px;padding:0 5px;font-size:10px;margin-left:4px;}
-.panel-content{flex:1;overflow-y:auto;padding:12px 16px;}
-.tab-panel{display:none;}
-.tab-panel.active{display:block;}
-
-/* KV TABLE */
-.kv-table{width:100%;border-collapse:collapse;}
-.kv-table thead th{padding:5px 8px;text-align:left;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:.5px;border-bottom:1px solid var(--border);}
-.kv-table tbody tr{border-bottom:1px solid var(--border-dim);}
-.kv-table tbody tr:hover{background:var(--bg2);}
-.kv-table td{padding:3px 4px;}
-.kv-table td input{width:100%;background:transparent;border:1px solid transparent;border-radius:4px;padding:4px 8px;}
-.kv-table td input:focus{background:var(--bg3);border-color:var(--border);}
-.kv-checkbox{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
-.kv-del{opacity:0;color:var(--err);font-size:13px;padding:2px 6px;border-radius:4px;transition:.15s;}
-tr:hover .kv-del{opacity:1;}
-.kv-del:hover{background:rgba(239,83,80,0.2);}
-.btn-add-row{margin-top:8px;padding:6px 12px;color:var(--text2);font-size:12px;border-radius:var(--radius);border:1px dashed var(--border);width:100%;text-align:left;transition:.15s;}
-.btn-add-row:hover{border-color:var(--accent);color:var(--accent);}
-
-/* BODY */
-.body-type-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
-.body-type-btn{padding:4px 12px;border-radius:14px;font-size:11px;font-weight:600;color:var(--text3);background:var(--bg2);transition:.15s;}
-.body-type-btn:hover{color:var(--text2);}
-.body-type-btn.active{background:var(--accent-bg);color:var(--accent);}
-
-/* AUTH */
-.auth-type-select{width:200px;margin-bottom:12px;}
-.auth-field{margin-bottom:8px;}
-.auth-field label{display:block;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;letter-spacing:.3px;}
-.auth-field input,.auth-field select{width:100%;}
-
-/* SCRIPTS */
-.script-textarea{width:100%;min-height:180px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;resize:vertical;color:var(--text1);line-height:1.7;font-family:'JetBrains Mono',monospace;font-size:12px;}
-.script-hint{margin-top:8px;padding:10px 12px;background:var(--bg2);border-radius:var(--radius);font-size:11px;color:var(--text3);line-height:1.9;}
-.script-hint code{color:var(--info);font-size:11px;}
-
-/* RESIZE */
-#resize-handle{height:5px;background:var(--border);cursor:row-resize;flex-shrink:0;transition:.15s;}
-#resize-handle:hover{background:var(--accent);}
-
-/* RESPONSE */
-#response-area{background:var(--bg1);display:flex;flex-direction:column;overflow:hidden;}
-#response-status-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
-.status-pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;}
-.s-2xx{background:rgba(76,175,136,.2);color:var(--ok);}
-.s-3xx{background:rgba(255,179,71,.2);color:var(--warn);}
-.s-4xx,.s-5xx,.s-err{background:rgba(239,83,80,.2);color:var(--err);}
-.s-1xx{background:rgba(100,181,246,.2);color:var(--info);}
-.stat-item{font-size:11px;color:var(--text3);}
-.stat-val{font-weight:700;color:var(--ok);}
-.resp-actions{margin-left:auto;display:flex;gap:4px;}
-.resp-tab-panel{display:none;flex:1;overflow:hidden;flex-direction:column;}
-.resp-tab-panel.active{display:flex;}
-.resp-body-wrap{flex:1;overflow:auto;padding:12px 16px;}
-#resp-pretty{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
-#resp-raw{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-x:auto;color:var(--text2);}
-#resp-preview{width:100%;height:100%;border:none;background:#fff;}
-.resp-headers-table{width:100%;border-collapse:collapse;}
-.resp-headers-table tr{border-bottom:1px solid var(--border-dim);}
-.resp-headers-table td{padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;}
-.resp-headers-table td:first-child{color:var(--info);width:40%;}
-
-/* TESTS & CONSOLE */
-.test-result{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:var(--radius);margin-bottom:4px;}
-.test-pass{background:rgba(76,175,136,.1);}
-.test-fail{background:rgba(239,83,80,.1);}
-.test-name{font-size:12px;font-weight:500;}
-.test-error{font-size:11px;color:var(--err);font-family:'JetBrains Mono',monospace;margin-top:2px;}
-.console-entry{padding:5px 10px;border-bottom:1px solid var(--border-dim);font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;gap:10px;}
-.c-type{color:var(--text3);width:50px;flex-shrink:0;font-weight:700;}
-.c-log .c-msg{color:var(--text1);}
-.c-warn .c-msg{color:var(--warn);}
-.c-error .c-msg{color:var(--err);}
-.c-info .c-msg{color:var(--info);}
-
-/* JSON HIGHLIGHT */
-.json-key{color:#9cdcfe;}
-.json-string{color:#ce9178;}
-.json-number{color:#b5cea8;}
-.json-bool,.json-null{color:#569cd6;}
-
-/* MODALS */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:10px;width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;}
-.modal-sm{width:440px;}
-.modal-lg{width:820px;}
-.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.modal-title{font-size:15px;font-weight:700;}
-.modal-close{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:16px;transition:.15s;}
-.modal-close:hover{background:var(--bg4);color:var(--text1);}
-.modal-body{padding:20px;overflow-y:auto;flex:1;}
-.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
-.form-group{margin-bottom:14px;}
-.form-group label{display:block;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:5px;letter-spacing:.3px;}
-.form-group input,.form-group select,.form-group textarea{width:100%;}
-.btn-primary{padding:8px 20px;background:var(--accent);color:#fff;border-radius:var(--radius);font-weight:700;font-size:13px;transition:.15s;}
-.btn-primary:hover{background:var(--accent2);}
-.btn-secondary{padding:8px 16px;background:var(--bg3);color:var(--text2);border-radius:var(--radius);font-weight:600;font-size:13px;transition:.15s;}
-.btn-secondary:hover{background:var(--bg4);color:var(--text1);}
-.btn-danger{padding:8px 16px;background:rgba(239,83,80,.2);color:var(--err);border-radius:var(--radius);font-weight:600;font-size:13px;transition:.15s;}
-.btn-danger:hover{background:var(--err);color:#fff;}
-
-/* CODEGEN */
-.codegen-lang-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
-.lang-tab{padding:5px 12px;border-radius:14px;font-size:11px;font-weight:600;color:var(--text3);background:var(--bg3);transition:.15s;}
-.lang-tab:hover{color:var(--text2);}
-.lang-tab.active{background:var(--accent-bg);color:var(--accent);}
-#codegen-output{width:100%;min-height:280px;background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);resize:none;line-height:1.7;}
-
-/* WS */
-#ws-messages{height:240px;overflow-y:auto;background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:11px;}
-.ws-msg{padding:4px 0;border-bottom:1px solid var(--border-dim);}
-.ws-sent{color:var(--accent);}
-.ws-recv{color:var(--ok);}
-.ws-sys{color:var(--text3);}
-
-/* ENV EDITOR */
-.env-var-row{display:flex;gap:8px;margin-bottom:6px;}
-.env-var-row input{flex:1;}
-.env-var-del{color:var(--err);padding:0 8px;font-size:16px;opacity:.5;transition:.15s;}
-.env-var-del:hover{opacity:1;}
-
-/* COOKIES */
-.cookie-domain{padding:8px;background:var(--bg1);border-radius:var(--radius);margin-bottom:8px;}
-.cookie-domain-name{font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;}
-.cookie-entry{display:flex;gap:8px;font-size:12px;padding:4px 6px;border-radius:4px;align-items:center;}
-.cookie-entry:hover{background:var(--bg3);}
-.cookie-name{color:var(--info);flex:0 0 140px;overflow:hidden;text-overflow:ellipsis;}
-.cookie-val{color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;font-family:'JetBrains Mono',monospace;}
-
-/* SETTINGS */
-.settings-section{margin-bottom:20px;}
-.settings-title{font-size:12px;font-weight:700;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-dim);}
-.settings-label{font-size:12px;font-weight:500;}
-.settings-desc{font-size:11px;color:var(--text3);margin-top:2px;}
-.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
-.toggle input{opacity:0;width:0;height:0;}
-.toggle-slider{position:absolute;inset:0;background:var(--bg4);border-radius:10px;cursor:pointer;transition:.2s;}
-.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
-.toggle input:checked+.toggle-slider{background:var(--accent);}
-.toggle input:checked+.toggle-slider:before{transform:translateX(16px);}
-
-/* MISC */
-.empty-state{text-align:center;padding:36px 20px;color:var(--text3);}
-.empty-icon{font-size:28px;margin-bottom:8px;}
-.empty-state p{font-size:12px;line-height:1.7;}
-#notifications{position:fixed;top:52px;right:16px;z-index:2000;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
-.notif{padding:10px 16px;border-radius:var(--radius);font-size:12px;font-weight:600;animation:slideIn .2s ease;max-width:300px;pointer-events:auto;}
-.notif-success{background:rgba(76,175,136,.95);color:#fff;}
-.notif-error{background:rgba(239,83,80,.95);color:#fff;}
-.notif-info{background:rgba(100,181,246,.95);color:#fff;}
-@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <!-- TOPBAR -->
 <div id="topbar">
   <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="var(--accent)" opacity=".2"/><path d="M8 12h8M12 8l4 4-4 4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" fill="var(--accent)" opacity=".18"/>
+      <circle cx="12" cy="12" r="5" fill="var(--accent)" opacity=".35"/>
+      <path d="M12 7v5l3 3" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
     PostmanWeb
   </div>
-  <div id="tabs-bar"></div>
+  <div id="tabs" style="display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none;align-items:flex-end;"></div>
   <button id="btn-new-tab" onclick="newTab()" title="New Tab (Ctrl+T)">＋</button>
   <div class="topbar-right">
-    <button id="cors-toggle-btn" onclick="quickToggleCORS()" title="Toggle CORS Proxy ON/OFF">⚡ CORS: OFF</button>
-    <button class="btn-icon" title="WebSocket Client" onclick="openWSModal()">⚡</button>
-    <button class="btn-icon" title="Environments" onclick="openEnvModal()">🌍</button>
-    <button class="btn-icon" title="Import Collection or cURL" onclick="openImportModal()">⬆</button>
-    <button class="btn-icon" title="Settings" onclick="openSettingsModal()">⚙</button>
+    <button id="cors-btn" onclick="toggleCORS()" title="Toggle CORS Proxy">⚡ CORS: OFF</button>
+    <button class="btn-icon" title="WebSocket Client" onclick="openWS()">🔌</button>
+    <button class="btn-icon" title="Environments" onclick="openEnvSB()">🌍</button>
+    <button class="btn-icon" title="Import" onclick="openImport()">📥</button>
+    <button class="btn-icon" title="Settings" onclick="openSettings()">⚙</button>
   </div>
 </div>
 
@@ -323,46 +36,49 @@ tr:hover .kv-del{opacity:1;}
 
   <!-- SIDEBAR -->
   <div id="sidebar">
-    <div id="sidebar-tabs">
-      <div class="sidebar-tab active" onclick="switchSidebar('collections')" id="st-collections">COLLS</div>
-      <div class="sidebar-tab" onclick="switchSidebar('history')" id="st-history">HISTORY</div>
-      <div class="sidebar-tab" onclick="switchSidebar('envs')" id="st-envs">ENVS</div>
+    <div class="sb-tabs">
+      <div class="sb-tab active" data-sb="colls" onclick="switchSB('colls')">COLLS</div>
+      <div class="sb-tab" data-sb="history" onclick="switchSB('history')">HISTORY</div>
+      <div class="sb-tab" data-sb="envs" onclick="switchSB('envs')">ENVS</div>
     </div>
-    <div id="sidebar-content">
+    <div id="sidebar-content" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
 
-      <!-- COLLECTIONS PANEL -->
-      <div class="sidebar-panel active" id="sp-collections">
-        <div class="sidebar-search"><input type="text" placeholder="Search collections..." id="search-collections" oninput="renderCollections()"></div>
-        <div class="sidebar-actions">
-          <button class="btn-sm btn-accent" onclick="openNewCollectionModal()">+ New</button>
-          <button class="btn-sm" onclick="openImportModal()">Import</button>
-          <button class="btn-sm" onclick="exportAllCollections()">Export</button>
+      <!-- COLLECTIONS -->
+      <div class="sb-panel active" id="sbp-colls">
+        <div class="sb-search"><input type="text" id="coll-search" placeholder="Search collections..." oninput="renderCollections()"></div>
+        <div class="sb-actions">
+          <button class="btn-s accent" onclick="openNewColl()">+ New</button>
+          <button class="btn-s" onclick="openImport()">Import</button>
+          <button class="btn-s" onclick="exportAllColls()">Export</button>
         </div>
-        <div class="sidebar-list" id="collections-list"></div>
+        <div class="sb-list" id="coll-list"></div>
       </div>
 
-      <!-- HISTORY PANEL -->
-      <div class="sidebar-panel" id="sp-history">
-        <div class="history-toggle-bar">
-          <div class="history-toggle-label">
-            <span class="history-dot" id="history-dot"></span>
+      <!-- HISTORY -->
+      <div class="sb-panel" id="sbp-history">
+        <div class="hist-toggle">
+          <div class="hist-label">
+            <span class="hrec-dot" id="hist-dot"></span>
             RECORD HISTORY
           </div>
-          <label class="toggle"><input type="checkbox" id="history-toggle" onchange="toggleHistoryRecording()" checked><span class="toggle-slider"></span></label>
+          <label class="toggle">
+            <input type="checkbox" id="hist-toggle" onchange="toggleHistRec()" checked>
+            <span class="t-slider"></span>
+          </label>
         </div>
-        <div class="sidebar-actions">
-          <button class="btn-sm btn-danger-sm" onclick="clearHistory()">🗑 Clear All</button>
-          <button class="btn-sm" onclick="unpinAllHistory()">📌 Unpin All</button>
+        <div class="sb-actions">
+          <button class="btn-s danger" onclick="clearHistory()">🗑 Clear All</button>
+          <button class="btn-s" onclick="unpinAll()">📌 Unpin All</button>
         </div>
-        <div class="sidebar-list" id="history-list" style="padding:4px;"></div>
+        <div class="sb-list" id="hist-list" style="padding:4px;"></div>
       </div>
 
-      <!-- ENVS PANEL -->
-      <div class="sidebar-panel" id="sp-envs">
-        <div class="sidebar-actions">
-          <button class="btn-sm btn-accent" onclick="openNewEnvModal()">+ New Env</button>
+      <!-- ENVIRONMENTS -->
+      <div class="sb-panel" id="sbp-envs">
+        <div class="sb-actions">
+          <button class="btn-s accent" onclick="openNewEnv()">+ New Env</button>
         </div>
-        <div class="sidebar-list" id="envs-list"></div>
+        <div class="sb-list" id="env-list"></div>
       </div>
 
     </div>
@@ -372,9 +88,9 @@ tr:hover .kv-del{opacity:1;}
   <div id="workspace">
 
     <!-- URL BAR -->
-    <div id="url-bar">
-      <button class="btn-icon" onclick="toggleSidebar()" title="Toggle Sidebar (Ctrl+\)">☰</button>
-      <select id="method-select" onchange="methodChanged()">
+    <div id="urlbar">
+      <button class="btn-icon" onclick="toggleSB()" title="Toggle Sidebar (Ctrl+\)">☰</button>
+      <select id="method-sel" onchange="colorMethod()">
         <option value="GET">GET</option>
         <option value="POST">POST</option>
         <option value="PUT">PUT</option>
@@ -383,129 +99,150 @@ tr:hover .kv-del{opacity:1;}
         <option value="HEAD">HEAD</option>
         <option value="OPTIONS">OPTIONS</option>
       </select>
-      <input type="text" id="url-input" placeholder="https://api.example.com/endpoint  — use {{variable}} syntax" autocomplete="off" onkeydown="if(event.key==='Enter')sendRequest()">
-      <button id="btn-save-req" onclick="saveToCollection()" title="Save to Collection (Ctrl+S)">💾 Save</button>
-      <button id="btn-cancel" onclick="cancelRequest()" title="Cancel Request">✕ Cancel</button>
-      <button id="btn-send" onclick="sendRequest()" title="Send Request (Ctrl+Enter)">Send ➤</button>
+      <input type="text" id="url-in" placeholder="https://api.example.com/endpoint  •  use {{variable}} syntax" autocomplete="off" spellcheck="false">
+      <button id="save-btn" onclick="saveToCollection()" title="Save to Collection (Ctrl+S)">💾 Save</button>
+      <button id="cancel-btn" onclick="cancelReq()" title="Cancel (Esc)">✕ Cancel</button>
+      <button id="send-btn" onclick="sendRequest()" title="Send Request (Ctrl+Enter)">Send ➤</button>
     </div>
 
-    <!-- SPLIT AREA -->
-    <div id="split-wrap">
+    <!-- SPLIT PANE -->
+    <div id="split">
 
-      <!-- REQUEST PANELS -->
-      <div id="req-panels" style="height:48%;min-height:140px;">
-        <div class="panel-tabs">
-          <div class="panel-tab active" onclick="switchReqPanel('params')" id="rt-params">Params</div>
-          <div class="panel-tab" onclick="switchReqPanel('headers')" id="rt-headers">Headers</div>
-          <div class="panel-tab" onclick="switchReqPanel('body')" id="rt-body">Body</div>
-          <div class="panel-tab" onclick="switchReqPanel('auth')" id="rt-auth">Auth</div>
-          <div class="panel-tab" onclick="switchReqPanel('prereq')" id="rt-prereq">Pre-req Script</div>
-          <div class="panel-tab" onclick="switchReqPanel('tests')" id="rt-tests">Tests</div>
-          <div class="panel-tab" onclick="switchReqPanel('reqsettings')" id="rt-reqsettings">Settings</div>
-          <div class="panel-tab" onclick="openCodegenModal()" style="margin-left:auto;color:var(--text3)">{ } Code</div>
+      <!-- REQUEST AREA -->
+      <div id="req-area" style="height:48%;min-height:130px;display:flex;flex-direction:column;">
+        <div class="ptabs">
+          <div class="ptab active" data-panel="params" onclick="switchReqPanel('params')">Params</div>
+          <div class="ptab" data-panel="headers" onclick="switchReqPanel('headers')">Headers</div>
+          <div class="ptab" data-panel="body" onclick="switchReqPanel('body')">Body</div>
+          <div class="ptab" data-panel="auth" onclick="switchReqPanel('auth')">Auth</div>
+          <div class="ptab" data-panel="pre" onclick="switchReqPanel('pre')">Pre-req Script</div>
+          <div class="ptab" data-panel="tests" onclick="switchReqPanel('tests')">Tests</div>
+          <div class="ptab" data-panel="rsettings" onclick="switchReqPanel('rsettings')">Settings</div>
+          <div class="ptab" style="margin-left:auto;color:var(--text3)" onclick="openCodegen()">{ } Code</div>
         </div>
-        <div class="panel-content">
+        <div class="pcontent">
 
           <!-- PARAMS -->
-          <div class="tab-panel active" id="tp-params">
-            <table class="kv-table"><thead><tr><th style="width:28px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:28px"></th></tr></thead><tbody id="params-tbody"></tbody></table>
-            <button class="btn-add-row" onclick="addKVRow('params')">+ Add Parameter</button>
+          <div class="tpanel active" id="rp-params">
+            <table class="kv-tbl"><thead><tr><th style="width:26px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:26px"></th></tr></thead>
+            <tbody id="kv-params"></tbody></table>
+            <button class="add-row-btn" onclick="addKVRow('params')">+ Add Parameter</button>
           </div>
 
           <!-- HEADERS -->
-          <div class="tab-panel" id="tp-headers">
-            <table class="kv-table"><thead><tr><th style="width:28px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:28px"></th></tr></thead><tbody id="headers-tbody"></tbody></table>
-            <button class="btn-add-row" onclick="addKVRow('headers')">+ Add Header</button>
+          <div class="tpanel" id="rp-headers">
+            <table class="kv-tbl"><thead><tr><th style="width:26px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:26px"></th></tr></thead>
+            <tbody id="kv-headers"></tbody></table>
+            <button class="add-row-btn" onclick="addKVRow('headers')">+ Add Header</button>
           </div>
 
           <!-- BODY -->
-          <div class="tab-panel" id="tp-body">
-            <div class="body-type-row">
-              <button class="body-type-btn active" onclick="setBodyType('none')" id="bt-none">none</button>
-              <button class="body-type-btn" onclick="setBodyType('formdata')" id="bt-formdata">form-data</button>
-              <button class="body-type-btn" onclick="setBodyType('urlencoded')" id="bt-urlencoded">x-www-form-urlencoded</button>
-              <button class="body-type-btn" onclick="setBodyType('raw')" id="bt-raw">raw</button>
-              <button class="body-type-btn" onclick="setBodyType('binary')" id="bt-binary">binary</button>
-              <button class="body-type-btn" onclick="setBodyType('graphql')" id="bt-graphql">GraphQL</button>
+          <div class="tpanel" id="rp-body">
+            <div class="btype-row">
+              <button class="btype-btn active" data-type="none" onclick="setBody('none')">none</button>
+              <button class="btype-btn" data-type="form" onclick="setBody('form')">form-data</button>
+              <button class="btype-btn" data-type="urlenc" onclick="setBody('urlenc')">x-www-form-urlencoded</button>
+              <button class="btype-btn" data-type="raw" onclick="setBody('raw')">raw</button>
+              <button class="btype-btn" data-type="binary" onclick="setBody('binary')">binary</button>
+              <button class="btype-btn" data-type="graphql" onclick="setBody('graphql')">GraphQL</button>
             </div>
-            <div id="body-none"><p style="color:var(--text3);font-size:12px;">No body for this request.</p></div>
-            <div id="body-formdata" style="display:none">
-              <table class="kv-table"><thead><tr><th style="width:28px"></th><th>Key</th><th>Value</th><th>Type</th><th style="width:28px"></th></tr></thead><tbody id="formdata-tbody"></tbody></table>
-              <button class="btn-add-row" onclick="addFormDataRow()">+ Add Field</button>
+
+            <div id="body-none"><p style="color:var(--text3);font-size:12px;padding:4px 0">No body will be sent with this request.</p></div>
+
+            <div id="body-form" style="display:none">
+              <table class="kv-tbl"><thead><tr><th style="width:26px"></th><th>Key</th><th>Value</th><th>Type</th><th style="width:26px"></th></tr></thead>
+              <tbody id="kv-form"></tbody></table>
+              <button class="add-row-btn" onclick="addFormRow()">+ Add Field</button>
             </div>
-            <div id="body-urlencoded" style="display:none">
-              <table class="kv-table"><thead><tr><th style="width:28px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:28px"></th></tr></thead><tbody id="urlencoded-tbody"></tbody></table>
-              <button class="btn-add-row" onclick="addKVRow('urlencoded')">+ Add Field</button>
+
+            <div id="body-urlenc" style="display:none">
+              <table class="kv-tbl"><thead><tr><th style="width:26px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:26px"></th></tr></thead>
+              <tbody id="kv-urlenc"></tbody></table>
+              <button class="add-row-btn" onclick="addKVRow('urlenc')">+ Add Field</button>
             </div>
+
             <div id="body-raw" style="display:none">
-              <select id="raw-format" style="margin-bottom:8px;width:auto;">
+              <select class="raw-format" id="raw-fmt">
                 <option value="json">JSON</option>
                 <option value="xml">XML</option>
                 <option value="html">HTML</option>
                 <option value="text">Text</option>
                 <option value="javascript">JavaScript</option>
               </select>
-              <textarea class="code" id="raw-body" style="width:100%;min-height:160px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;color:var(--text1);resize:vertical;line-height:1.6;" placeholder='{"key": "value"}'></textarea>
+              <textarea class="code-area" id="code-raw" rows="10" placeholder='{"key": "value"}'></textarea>
             </div>
+
             <div id="body-binary" style="display:none">
-              <input type="file" id="binary-file" style="width:100%;padding:20px;background:var(--bg2);border:2px dashed var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2);">
+              <input type="file" id="bin-file" style="width:100%;padding:20px;background:var(--bg2);border:2px dashed var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text2)">
             </div>
+
             <div id="body-graphql" style="display:none">
-              <div style="display:grid;gap:8px;">
+              <div style="display:grid;gap:10px">
                 <div>
-                  <label style="font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bottom:4px;">QUERY</label>
-                  <textarea class="code" id="gql-query" rows="7" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;color:var(--text1);resize:vertical;" placeholder="query { users { id name } }"></textarea>
+                  <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;margin-bottom:5px">QUERY</div>
+                  <textarea class="code-area" id="gql-q" rows="7" placeholder="query {\n  users {\n    id\n    name\n    email\n  }\n}"></textarea>
                 </div>
                 <div>
-                  <label style="font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bottom:4px;">VARIABLES (JSON)</label>
-                  <textarea class="code" id="gql-vars" rows="4" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;color:var(--text1);resize:vertical;" placeholder='{"id": 1}'></textarea>
+                  <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;margin-bottom:5px">VARIABLES (JSON)</div>
+                  <textarea class="code-area" id="gql-v" rows="4" placeholder='{"userId": 1}'></textarea>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- AUTH -->
-          <div class="tab-panel" id="tp-auth">
-            <select class="auth-type-select" id="auth-type" onchange="renderAuthFields()">
-              <option value="none">No Auth</option>
-              <option value="bearer">Bearer Token</option>
-              <option value="apikey">API Key</option>
-              <option value="basic">Basic Auth</option>
-              <option value="digest">Digest Auth</option>
-              <option value="oauth1">OAuth 1.0</option>
-              <option value="oauth2">OAuth 2.0</option>
-              <option value="hawk">Hawk Auth</option>
-              <option value="aws">AWS Signature</option>
-              <option value="ntlm">NTLM</option>
-            </select>
-            <div id="auth-fields-container"></div>
+          <div class="tpanel" id="rp-auth">
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;margin-bottom:5px">AUTH TYPE</div>
+              <select class="auth-sel" id="auth-sel" onchange="renderAuthFields()">
+                <option value="none">No Auth</option>
+                <option value="bearer">Bearer Token</option>
+                <option value="apikey">API Key</option>
+                <option value="basic">Basic Auth</option>
+                <option value="digest">Digest Auth</option>
+                <option value="oauth1">OAuth 1.0</option>
+                <option value="oauth2">OAuth 2.0</option>
+                <option value="hawk">Hawk Auth</option>
+                <option value="aws">AWS Signature</option>
+                <option value="ntlm">NTLM</option>
+              </select>
+            </div>
+            <div id="auth-fields"></div>
           </div>
 
           <!-- PRE-REQUEST SCRIPT -->
-          <div class="tab-panel" id="tp-prereq">
-            <textarea class="script-textarea" id="prereq-script" placeholder="// Pre-request Script — runs before the request&#10;// pm.environment.set('token', 'abc123');&#10;// pm.globals.set('baseUrl', 'https://api.example.com');&#10;// console.log('Before request');"></textarea>
-            <div class="script-hint">
-              <code>pm.environment.set(key, val)</code> · <code>pm.environment.get(key)</code> · <code>pm.globals.set(key, val)</code><br>
-              <code>pm.variables.get(key)</code> · <code>pm.collectionVariables.set(key, val)</code> · <code>console.log(...)</code>
+          <div class="tpanel" id="rp-pre">
+            <textarea class="script-area" id="pre-script" rows="9" placeholder="// Pre-request Script — runs BEFORE the request is sent&#10;&#10;// Set environment variable&#10;// pm.environment.set('token', 'abc123');&#10;&#10;// Set global variable&#10;// pm.globals.set('baseUrl', 'https://api.example.com');&#10;&#10;// Log something&#10;// console.log('About to send request...');&#10;&#10;// Make a sub-request&#10;// pm.sendRequest({url: '...', method: 'GET'}, (err, res) => { ... });"></textarea>
+            <div class="script-refs">
+              <code>pm.environment.set(key, val)</code> · <code>pm.environment.get(key)</code> · <code>pm.globals.set(key, val)</code> · <code>pm.globals.get(key)</code><br>
+              <code>pm.variables.get(key)</code> · <code>pm.collectionVariables.set(key, val)</code> · <code>pm.sendRequest(opts, cb)</code> · <code>console.log(...)</code>
             </div>
           </div>
 
           <!-- TEST SCRIPT -->
-          <div class="tab-panel" id="tp-tests">
-            <textarea class="script-textarea" id="tests-script" placeholder="// Test Script — runs after response&#10;pm.test('Status is 200', () => pm.response.to.have.status(200));&#10;pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));&#10;pm.test('Has data', () => pm.expect(pm.response.json()).to.have.property('data'));"></textarea>
-            <div class="script-hint">
+          <div class="tpanel" id="rp-tests">
+            <textarea class="script-area" id="test-script" rows="9" placeholder="// Test Script — runs AFTER the response is received&#10;&#10;// Status code check&#10;pm.test('Status is 200', () => pm.response.to.have.status(200));&#10;&#10;// Response time check&#10;pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));&#10;&#10;// JSON body check&#10;pm.test('Has valid data', () => {&#10;  const json = pm.response.json();&#10;  pm.expect(json).to.have.property('data');&#10;});&#10;&#10;// Set variable from response&#10;// const token = pm.response.json().token;&#10;// pm.environment.set('authToken', token);"></textarea>
+            <div class="script-refs">
               <code>pm.test(name, fn)</code> · <code>pm.expect(val).to.equal(x)</code> · <code>pm.response.json()</code> · <code>pm.response.text()</code><br>
-              <code>pm.response.to.have.status(200)</code> · <code>pm.response.responseTime</code> · <code>pm.response.headers.get(key)</code>
+              <code>pm.response.to.have.status(200)</code> · <code>pm.response.responseTime</code> · <code>pm.response.headers.get(key)</code> · <code>pm.environment.set(key, val)</code>
             </div>
           </div>
 
           <!-- REQUEST SETTINGS -->
-          <div class="tab-panel" id="tp-reqsettings">
-            <div style="display:grid;gap:10px;max-width:500px;">
-              <div class="settings-row"><div><div class="settings-label">Follow Redirects</div><div class="settings-desc">Automatically follow HTTP redirects</div></div><label class="toggle"><input type="checkbox" id="s-redirects" checked><span class="toggle-slider"></span></label></div>
-              <div class="settings-row"><div><div class="settings-label">SSL Verification</div><div class="settings-desc">Verify SSL certificates</div></div><label class="toggle"><input type="checkbox" id="s-ssl" checked><span class="toggle-slider"></span></label></div>
-              <div class="settings-row"><div><div class="settings-label">Encode URL</div><div class="settings-desc">Encode special characters in URL</div></div><label class="toggle"><input type="checkbox" id="s-encode" checked><span class="toggle-slider"></span></label></div>
-              <div class="form-group" style="margin-top:4px;"><label>Timeout (ms)</label><input type="number" id="s-timeout" value="30000" style="width:150px;"></div>
+          <div class="tpanel" id="rp-rsettings">
+            <div style="max-width:500px;display:grid;gap:8px">
+              <div class="s-row">
+                <div><div class="s-label">Follow Redirects</div><div class="s-desc">Automatically follow HTTP 3xx redirects</div></div>
+                <label class="toggle"><input type="checkbox" id="opt-redirect" checked><span class="t-slider"></span></label>
+              </div>
+              <div class="s-row">
+                <div><div class="s-label">Disable Body</div><div class="s-desc">Send request without body even if body is configured</div></div>
+                <label class="toggle"><input type="checkbox" id="opt-nobody"><span class="t-slider"></span></label>
+              </div>
+              <div style="margin-top:8px">
+                <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.5px;margin-bottom:6px">REQUEST TIMEOUT (ms)</div>
+                <input type="number" id="opt-timeout" value="30000" style="width:150px">
+              </div>
             </div>
           </div>
 
@@ -513,49 +250,70 @@ tr:hover .kv-del{opacity:1;}
       </div>
 
       <!-- RESIZE HANDLE -->
-      <div id="resize-handle"></div>
+      <div id="resizer"></div>
 
       <!-- RESPONSE AREA -->
-      <div id="response-area" style="flex:1;min-height:120px;">
-        <div id="response-status-bar">
-          <span id="resp-status-pill" class="status-pill" style="display:none"></span>
-          <span id="resp-time-stat" class="stat-item" style="display:none">Time: <span class="stat-val" id="resp-time">–</span></span>
-          <span id="resp-size-stat" class="stat-item" style="display:none">Size: <span class="stat-val" id="resp-size">–</span></span>
-          <span id="resp-empty-hint" style="color:var(--text3);font-size:12px;">Hit Send to get a response</span>
-          <div class="resp-actions" id="resp-actions" style="display:none">
-            <button class="btn-sm" onclick="copyResponse()">📋 Copy</button>
-            <button class="btn-sm" onclick="saveResponseToFile()">💾 Save</button>
+      <div id="resp-area" style="flex:1;min-height:120px;">
+        <div id="resp-status">
+          <span id="r-pill" class="spill" style="display:none"></span>
+          <span id="r-time" class="stat" style="display:none"></span>
+          <span id="r-size" class="stat" style="display:none"></span>
+          <span id="r-hint" style="color:var(--text3);font-size:12px">Hit Send to get a response</span>
+          <div id="r-acts" class="resp-acts" style="display:none">
+            <button class="btn-s" onclick="copyResponse()">📋 Copy</button>
+            <button class="btn-s" onclick="saveRespFile()">💾 Save</button>
           </div>
         </div>
+
         <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-          <div class="panel-tabs">
-            <div class="panel-tab active" onclick="switchRespPanel('body')" id="rp-body">Body</div>
-            <div class="panel-tab" onclick="switchRespPanel('headers')" id="rp-headers">Headers</div>
-            <div class="panel-tab" onclick="switchRespPanel('cookies')" id="rp-cookies">Cookies</div>
-            <div class="panel-tab" onclick="switchRespPanel('tests')" id="rp-tests">Test Results <span class="badge" id="test-count" style="display:none">0</span></div>
-            <div class="panel-tab" onclick="switchRespPanel('console')" id="rp-console">Console</div>
+          <!-- Response Panel Tabs -->
+          <div class="ptabs">
+            <div class="rptab ptab active" data-panel="rbody" onclick="switchRespPanel('rbody')">Body</div>
+            <div class="rptab ptab" data-panel="rhdrs" onclick="switchRespPanel('rhdrs')">Headers</div>
+            <div class="rptab ptab" data-panel="rcookies" onclick="switchRespPanel('rcookies')">Cookies</div>
+            <div class="rptab ptab" data-panel="rtests" onclick="switchRespPanel('rtests')">Test Results <span class="pbadge" id="test-badge" style="display:none">0</span></div>
+            <div class="rptab ptab" data-panel="rconsole" onclick="switchRespPanel('rconsole')">Console</div>
           </div>
-          <div class="resp-tab-panel active" id="rp-body-panel">
-            <div class="panel-tabs" style="background:var(--bg0);">
-              <div class="panel-tab active" onclick="switchBodyView('pretty')" id="bv-pretty">Pretty</div>
-              <div class="panel-tab" onclick="switchBodyView('raw')" id="bv-raw">Raw</div>
-              <div class="panel-tab" onclick="switchBodyView('preview')" id="bv-preview">Preview</div>
+
+          <!-- BODY PANEL -->
+          <div class="rtpanel active" id="rsp-rbody">
+            <div class="ptabs" style="background:var(--bg0)">
+              <div class="rbview ptab active" data-view="pretty" onclick="switchRespBody('pretty')">Pretty</div>
+              <div class="rbview ptab" data-view="raw" onclick="switchRespBody('raw')">Raw</div>
+              <div class="rbview ptab" data-view="preview" onclick="switchRespBody('preview')">Preview</div>
             </div>
             <div class="resp-body-wrap">
-              <div id="resp-body-pretty" class="tab-panel active"><pre id="resp-pretty"></pre></div>
-              <div id="resp-body-raw" class="tab-panel"><pre id="resp-raw"></pre></div>
-              <div id="resp-body-preview" class="tab-panel" style="height:300px;"><iframe id="resp-preview" sandbox="allow-scripts allow-same-origin"></iframe></div>
+              <div id="rbp-pretty" class="rbpanel active"><pre id="resp-pretty"></pre></div>
+              <div id="rbp-raw" class="rbpanel" style="display:none"><pre id="resp-raw"></pre></div>
+              <div id="rbp-preview" class="rbpanel" style="display:none;height:300px"><iframe id="resp-preview" sandbox="allow-scripts allow-same-origin"></iframe></div>
             </div>
           </div>
-          <div class="resp-tab-panel" id="rp-headers-panel"><div class="panel-content"><table class="resp-headers-table" id="resp-headers-table"></table></div></div>
-          <div class="resp-tab-panel" id="rp-cookies-panel"><div class="panel-content" id="resp-cookies-content"></div></div>
-          <div class="resp-tab-panel" id="rp-tests-panel"><div class="panel-content" id="test-results-container"></div></div>
-          <div class="resp-tab-panel" id="rp-console-panel">
-            <div style="padding:8px 12px;border-bottom:1px solid var(--border-dim);">
-              <button class="btn-sm" onclick="clearConsole()">Clear Console</button>
-            </div>
-            <div id="console-output" style="flex:1;overflow-y:auto;"></div>
+
+          <!-- HEADERS PANEL -->
+          <div class="rtpanel" id="rsp-rhdrs">
+            <div class="pcontent"><table class="rh-tbl" id="r-headers-tbl"></table></div>
           </div>
+
+          <!-- COOKIES PANEL -->
+          <div class="rtpanel" id="rsp-rcookies">
+            <div class="pcontent" id="cookies-out"></div>
+          </div>
+
+          <!-- TEST RESULTS PANEL -->
+          <div class="rtpanel" id="rsp-rtests">
+            <div class="pcontent" id="test-output">
+              <div class="empty"><p>Write tests in the Tests tab above, then send a request.</p></div>
+            </div>
+          </div>
+
+          <!-- CONSOLE PANEL -->
+          <div class="rtpanel" id="rsp-rconsole" style="flex-direction:column">
+            <div style="padding:8px 12px;border-bottom:1px solid var(--border-dim);flex-shrink:0">
+              <button class="btn-s" onclick="clearConsole()">Clear Console</button>
+            </div>
+            <div id="console-out" style="flex:1;overflow-y:auto;"></div>
+          </div>
+
         </div>
       </div>
 
@@ -563,1510 +321,9 @@ tr:hover .kv-del{opacity:1;}
   </div>
 </div>
 
-<div id="notifications"></div>
-<div id="modal-container"></div>
+<div id="notifs"></div>
+<div id="modals"></div>
 
-<script>
-// ================================================================
-// APP STATE
-// ================================================================
-var APP = {
-  tabs: [],
-  activeTabId: null,
-  collections: JSON.parse(localStorage.getItem('pweb_collections') || '[]'),
-  environments: JSON.parse(localStorage.getItem('pweb_environments') || '[]'),
-  activeEnvId: localStorage.getItem('pweb_active_env') || null,
-  history: JSON.parse(localStorage.getItem('pweb_history') || '[]'),
-  globals: JSON.parse(localStorage.getItem('pweb_globals') || '{}'),
-  cookies: JSON.parse(localStorage.getItem('pweb_cookies') || '{}'),
-  settings: JSON.parse(localStorage.getItem('pweb_settings') || '{}'),
-  consoleMessages: []
-};
-
-var _currentBodyType = 'none';
-var _testResults = [];
-var _consoleLogs = [];
-var _abortController = null;
-var _wsConn = null;
-
-// ================================================================
-// HELPERS
-// ================================================================
-function uid() { return Math.random().toString(36).slice(2, 10); }
-
-function saveState() {
-  localStorage.setItem('pweb_collections', JSON.stringify(APP.collections));
-  localStorage.setItem('pweb_environments', JSON.stringify(APP.environments));
-  if (APP.activeEnvId) localStorage.setItem('pweb_active_env', APP.activeEnvId);
-  localStorage.setItem('pweb_history', JSON.stringify(APP.history.slice(0, 300)));
-  localStorage.setItem('pweb_globals', JSON.stringify(APP.globals));
-  localStorage.setItem('pweb_cookies', JSON.stringify(APP.cookies));
-  localStorage.setItem('pweb_settings', JSON.stringify(APP.settings));
-}
-
-function notify(msg, type) {
-  if (!type) type = 'info';
-  var n = document.createElement('div');
-  n.className = 'notif notif-' + type;
-  n.textContent = msg;
-  document.getElementById('notifications').appendChild(n);
-  setTimeout(function() { n.remove(); }, 3500);
-}
-
-function escHtml(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function openModal(html) {
-  var c = document.getElementById('modal-container');
-  c.innerHTML = html;
-  var ov = c.querySelector('.modal-overlay');
-  if (ov) ov.addEventListener('click', function(e) { if (e.target === ov) closeModal(); });
-}
-
-function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
-
-// ================================================================
-// VARIABLE RESOLUTION
-// ================================================================
-function getActiveEnv() {
-  return APP.environments.find(function(e) { return e.id === APP.activeEnvId; }) || null;
-}
-
-function resolveVars(str) {
-  if (!str) return str;
-  var env = getActiveEnv();
-  var ev = env ? env.variables : {};
-  var dyn = {
-    '{{$timestamp}}': function() { return Date.now().toString(); },
-    '{{$isoTimestamp}}': function() { return new Date().toISOString(); },
-    '{{$randomInt}}': function() { return Math.floor(Math.random() * 1000).toString(); },
-    '{{$guid}}': function() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) { var r = Math.random()*16|0; return (c=='x'?r:(r&0x3|0x8)).toString(16); }); },
-    '{{$randomFirstName}}': function() { return ['Alice','Bob','Charlie','Diana','Eve'][Math.floor(Math.random()*5)]; },
-    '{{$randomEmail}}': function() { return 'user' + Math.floor(Math.random()*1000) + '@example.com'; },
-    '{{$randomBoolean}}': function() { return Math.random() > .5 ? 'true' : 'false'; },
-    '{{$randomAlphaNumeric}}': function() { return Math.random().toString(36).slice(2, 8); }
-  };
-  Object.keys(dyn).forEach(function(k) { str = str.split(k).join(dyn[k]()); });
-  str = str.replace(/\{\{([^}]+)\}\}/g, function(match, key) {
-    var tab = getActiveTab();
-    return ev[key] || APP.globals[key] || (tab && tab.collectionVars && tab.collectionVars[key]) || match;
-  });
-  return str;
-}
-
-// ================================================================
-// PM SANDBOX
-// ================================================================
-function buildPMObject(response) {
-  _testResults = [];
-  _consoleLogs = [];
-  var tab = getActiveTab();
-  var env = getActiveEnv();
-
-  function expect(val) {
-    var chain = {
-      equal: function(x) { if (val !== x) throw new Error('Expected ' + JSON.stringify(x) + ' got ' + JSON.stringify(val)); return chain; },
-      eql: function(x) { if (JSON.stringify(val) !== JSON.stringify(x)) throw new Error('Deep equal failed'); return chain; },
-      include: function(x) { if (String(val).indexOf(x) === -1) throw new Error('Expected to include ' + x); return chain; },
-      be: {
-        below: function(x) { if (!(val < x)) throw new Error('Expected ' + val + ' < ' + x); },
-        above: function(x) { if (!(val > x)) throw new Error('Expected ' + val + ' > ' + x); },
-        ok: function() { if (!val) throw new Error('Expected truthy'); },
-        a: function(t) { if (typeof val !== t) throw new Error('Expected type ' + t); },
-        an: function(t) { if (typeof val !== t) throw new Error('Expected type ' + t); }
-      },
-      not: { equal: function(x) { if (val === x) throw new Error('Expected not ' + JSON.stringify(x)); } }
-    };
-    chain.to = chain;
-    return chain;
-  }
-
-  var pm = {
-    test: function(name, fn) {
-      try { fn(); _testResults.push({name: name, pass: true}); }
-      catch(e) { _testResults.push({name: name, pass: false, error: e.message}); }
-    },
-    expect: expect,
-    response: response ? {
-      code: response.status,
-      status: response.statusText,
-      responseTime: response._time || 0,
-      size: response._size || 0,
-      json: function() { try { return JSON.parse(response._body); } catch(e) { throw new Error('Not JSON'); } },
-      text: function() { return response._body; },
-      headers: { get: function(k) { return response._headers && response._headers[k.toLowerCase()]; } },
-      to: { have: {
-        status: function(code) { if (response.status !== code) throw new Error('Expected status ' + code + ' got ' + response.status); },
-        header: function(key) { if (!response._headers || !response._headers[key.toLowerCase()]) throw new Error('Missing header: ' + key); }
-      }}
-    } : {},
-    request: {
-      url: { toString: function() { return document.getElementById('url-input').value; } },
-      method: document.getElementById('method-select').value,
-      headers: { add: function() {}, get: function() {} },
-      body: { raw: (document.getElementById('raw-body') && document.getElementById('raw-body').value) || '' }
-    },
-    environment: {
-      get: function(k) { return env && env.variables && env.variables[k]; },
-      set: function(k, v) { if (env) { env.variables[k] = v; saveState(); } },
-      unset: function(k) { if (env) { delete env.variables[k]; saveState(); } },
-      has: function(k) { return !!(env && env.variables && env.variables[k]); }
-    },
-    globals: {
-      get: function(k) { return APP.globals[k]; },
-      set: function(k, v) { APP.globals[k] = v; saveState(); },
-      unset: function(k) { delete APP.globals[k]; saveState(); },
-      has: function(k) { return k in APP.globals; },
-      toObject: function() { return Object.assign({}, APP.globals); }
-    },
-    variables: {
-      get: function(k) { return (env && env.variables && env.variables[k]) || APP.globals[k] || (tab && tab.collectionVars && tab.collectionVars[k]); },
-      set: function(k, v) { if (env) { env.variables[k] = v; saveState(); } },
-      has: function(k) { return !!((env && env.variables && env.variables[k]) || APP.globals[k]); }
-    },
-    collectionVariables: {
-      get: function(k) { return tab && tab.collectionVars && tab.collectionVars[k]; },
-      set: function(k, v) { if (tab) { tab.collectionVars = tab.collectionVars || {}; tab.collectionVars[k] = v; } }
-    },
-    cookies: { get: function(url, name) { return APP.cookies && APP.cookies[url] && APP.cookies[url][name]; } },
-    sendRequest: function(opts, cb) {
-      fetch(opts.url, {method: opts.method || 'GET', headers: opts.headers})
-        .then(function(r) { return r.text().then(function(body) { if (cb) cb(null, {code: r.status, body: body}); }); })
-        .catch(function(e) { if (cb) cb(e); });
-    },
-    info: { requestId: uid(), iteration: 0, eventName: 'prerequest' }
-  };
-  return {pm: pm, expect: expect};
-}
-
-function runScript(script, pmObj) {
-  if (!script || !script.trim()) return;
-  var con = {
-    log: function() { var a = Array.prototype.slice.call(arguments); _consoleLogs.push({type:'log', msg: a.map(function(x){return typeof x==='object'?JSON.stringify(x,null,2):x;}).join(' ')}); },
-    warn: function() { var a = Array.prototype.slice.call(arguments); _consoleLogs.push({type:'warn', msg: a.map(String).join(' ')}); },
-    error: function() { var a = Array.prototype.slice.call(arguments); _consoleLogs.push({type:'error', msg: a.map(String).join(' ')}); },
-    info: function() { var a = Array.prototype.slice.call(arguments); _consoleLogs.push({type:'info', msg: a.map(String).join(' ')}); }
-  };
-  try { new Function('pm', 'console', 'expect', script)(pmObj.pm, con, pmObj.expect); }
-  catch(e) { _consoleLogs.push({type:'error', msg: 'Script error: ' + e.message}); }
-}
-
-// ================================================================
-// TABS
-// ================================================================
-function createTab(data) {
-  data = data || {};
-  var tab = {
-    id: uid(),
-    name: data.name || 'New Request',
-    method: data.method || 'GET',
-    url: data.url || '',
-    params: data.params || [{id:uid(),enabled:true,key:'',value:'',desc:''}],
-    headers: data.headers || [{id:uid(),enabled:true,key:'',value:'',desc:''}],
-    bodyType: data.bodyType || 'none',
-    rawFormat: data.rawFormat || 'json',
-    rawBody: data.rawBody || '',
-    formData: data.formData || [],
-    urlEncoded: data.urlEncoded || [],
-    gqlQuery: data.gqlQuery || '',
-    gqlVars: data.gqlVars || '',
-    authType: data.authType || 'none',
-    authData: data.authData || {},
-    prereqScript: data.prereqScript || '',
-    testsScript: data.testsScript || '',
-    response: null,
-    collectionVars: {}
-  };
-  APP.tabs.push(tab);
-  return tab;
-}
-
-function getActiveTab() {
-  return APP.tabs.find(function(t) { return t.id === APP.activeTabId; });
-}
-
-function switchTab(id) {
-  saveCurrentTab();
-  APP.activeTabId = id;
-  var tab = APP.tabs.find(function(t) { return t.id === id; });
-  loadTabToUI(tab);
-  renderTabsBar();
-  renderResponse(tab && tab.response);
-}
-
-function newTab(data) {
-  var tab = createTab(data);
-  APP.activeTabId = tab.id;
-  renderTabsBar();
-  loadTabToUI(tab);
-  renderResponse(null);
-}
-
-function closeTab(id, e) {
-  if (e) e.stopPropagation();
-  var idx = APP.tabs.findIndex(function(t) { return t.id === id; });
-  if (idx === -1) return;
-  APP.tabs.splice(idx, 1);
-  if (APP.tabs.length === 0) {
-    newTab();
-  } else {
-    var ni = Math.min(idx, APP.tabs.length - 1);
-    APP.activeTabId = APP.tabs[ni].id;
-    loadTabToUI(APP.tabs[ni]);
-    renderResponse(APP.tabs[ni].response);
-  }
-  renderTabsBar();
-}
-
-function renderTabsBar() {
-  var mc = {GET:'var(--get)',POST:'var(--post)',PUT:'var(--put)',PATCH:'var(--patch)',DELETE:'var(--delete)',HEAD:'var(--head)',OPTIONS:'var(--options)'};
-  document.getElementById('tabs-bar').innerHTML = APP.tabs.map(function(t) {
-    return '<div class="tab-item ' + (t.id === APP.activeTabId ? 'active' : '') + '" onclick="switchTab(\'' + t.id + '\')">' +
-      '<span class="tab-method" style="color:' + (mc[t.method] || 'var(--text2)') + '">' + t.method + '</span>' +
-      '<span class="tab-name">' + escHtml(t.name) + '</span>' +
-      '<button class="tab-close" onclick="closeTab(\'' + t.id + '\',event)">✕</button>' +
-      '</div>';
-  }).join('');
-}
-
-function saveCurrentTab() {
-  var tab = getActiveTab();
-  if (!tab) return;
-  tab.method = document.getElementById('method-select').value;
-  tab.url = document.getElementById('url-input').value;
-  tab.bodyType = _currentBodyType;
-  tab.rawBody = document.getElementById('raw-body').value;
-  tab.rawFormat = document.getElementById('raw-format').value;
-  tab.gqlQuery = document.getElementById('gql-query').value;
-  tab.gqlVars = document.getElementById('gql-vars').value;
-  tab.authType = document.getElementById('auth-type').value;
-  tab.prereqScript = document.getElementById('prereq-script').value;
-  tab.testsScript = document.getElementById('tests-script').value;
-  tab.params = readKVTable('params');
-  tab.headers = readKVTable('headers');
-  tab.urlEncoded = readKVTable('urlencoded');
-  tab.authData = readAuthData();
-}
-
-function loadTabToUI(tab) {
-  if (!tab) return;
-  document.getElementById('method-select').value = tab.method;
-  document.getElementById('url-input').value = tab.url;
-  loadKVTable('params', tab.params);
-  loadKVTable('headers', tab.headers);
-  loadKVTable('urlencoded', tab.urlEncoded || []);
-  setBodyType(tab.bodyType || 'none');
-  document.getElementById('raw-body').value = tab.rawBody || '';
-  document.getElementById('raw-format').value = tab.rawFormat || 'json';
-  document.getElementById('gql-query').value = tab.gqlQuery || '';
-  document.getElementById('gql-vars').value = tab.gqlVars || '';
-  document.getElementById('auth-type').value = tab.authType || 'none';
-  document.getElementById('prereq-script').value = tab.prereqScript || '';
-  document.getElementById('tests-script').value = tab.testsScript || '';
-  renderAuthFields(tab.authData);
-  methodChanged();
-}
-
-// ================================================================
-// KV TABLES
-// ================================================================
-function addKVRow(type, key, value, desc, enabled) {
-  key = key || ''; value = value || ''; desc = desc || '';
-  if (enabled === undefined) enabled = true;
-  var tbody = document.getElementById(type + '-tbody');
-  var tr = document.createElement('tr');
-  tr.dataset.id = uid();
-  tr.innerHTML =
-    '<td><input type="checkbox" class="kv-checkbox" ' + (enabled ? 'checked' : '') + '></td>' +
-    '<td><input type="text" placeholder="Key" value="' + escHtml(key) + '"></td>' +
-    '<td><input type="text" placeholder="Value" value="' + escHtml(value) + '"></td>' +
-    '<td><input type="text" placeholder="Description" value="' + escHtml(desc) + '"></td>' +
-    '<td><button class="kv-del" onclick="this.closest(\'tr\').remove()">✕</button></td>';
-  tbody.appendChild(tr);
-}
-
-function addFormDataRow(key, value, type) {
-  key = key || ''; value = value || ''; type = type || 'text';
-  var tbody = document.getElementById('formdata-tbody');
-  var tr = document.createElement('tr');
-  tr.innerHTML =
-    '<td><input type="checkbox" class="kv-checkbox" checked></td>' +
-    '<td><input type="text" placeholder="Key" value="' + escHtml(key) + '"></td>' +
-    '<td><input type="text" placeholder="Value" value="' + escHtml(value) + '"></td>' +
-    '<td><select><option value="text">Text</option><option value="file" ' + (type==='file'?'selected':'') + '>File</option></select></td>' +
-    '<td><button class="kv-del" onclick="this.closest(\'tr\').remove()">✕</button></td>';
-  tbody.appendChild(tr);
-}
-
-function readKVTable(type) {
-  var rows = [];
-  document.querySelectorAll('#' + type + '-tbody tr').forEach(function(tr) {
-    var cells = tr.querySelectorAll('input');
-    rows.push({id: tr.dataset.id || uid(), enabled: cells[0].checked, key: cells[1].value, value: cells[2].value, desc: (cells[3] && cells[3].value) || ''});
-  });
-  return rows;
-}
-
-function loadKVTable(type, rows) {
-  rows = rows || [];
-  document.getElementById(type + '-tbody').innerHTML = '';
-  rows.forEach(function(r) { addKVRow(type, r.key || '', r.value || '', r.desc || '', r.enabled !== false); });
-  if (rows.length === 0) addKVRow(type);
-}
-
-// ================================================================
-// BODY TYPE
-// ================================================================
-function setBodyType(type) {
-  _currentBodyType = type;
-  document.querySelectorAll('.body-type-btn').forEach(function(b) { b.classList.remove('active'); });
-  var btn = document.getElementById('bt-' + type);
-  if (btn) btn.classList.add('active');
-  ['none','formdata','urlencoded','raw','binary','graphql'].forEach(function(t) {
-    var el = document.getElementById('body-' + t);
-    if (el) el.style.display = (t === type ? 'block' : 'none');
-  });
-}
-
-// ================================================================
-// AUTH
-// ================================================================
-var AUTH_FIELDS = {
-  none: '',
-  bearer: '<div class="auth-field"><label>TOKEN</label><input type="text" id="auth-token" placeholder="Bearer token..."></div>',
-  apikey: '<div class="auth-field"><label>KEY NAME</label><input type="text" id="auth-key" placeholder="X-API-Key"></div><div class="auth-field"><label>KEY VALUE</label><input type="text" id="auth-key-value" placeholder="your-api-key"></div><div class="auth-field"><label>ADD TO</label><select id="auth-key-in"><option value="header">Header</option><option value="query">Query Params</option></select></div>',
-  basic: '<div class="auth-field"><label>USERNAME</label><input type="text" id="auth-user" placeholder="username"></div><div class="auth-field"><label>PASSWORD</label><input type="password" id="auth-pass" placeholder="password"></div>',
-  digest: '<div class="auth-field"><label>USERNAME</label><input type="text" id="auth-duser" placeholder="username"></div><div class="auth-field"><label>PASSWORD</label><input type="password" id="auth-dpass" placeholder="password"></div>',
-  oauth1: '<div class="auth-field"><label>CONSUMER KEY</label><input type="text" id="auth-ck" placeholder="Consumer Key"></div><div class="auth-field"><label>CONSUMER SECRET</label><input type="text" id="auth-cs" placeholder="Consumer Secret"></div><div class="auth-field"><label>ACCESS TOKEN</label><input type="text" id="auth-at" placeholder="Access Token"></div><div class="auth-field"><label>TOKEN SECRET</label><input type="text" id="auth-ts" placeholder="Token Secret"></div>',
-  oauth2: '<div class="auth-field"><label>ACCESS TOKEN</label><input type="text" id="auth-o2token" placeholder="Access token"></div><div class="auth-field"><label>HEADER PREFIX</label><input type="text" id="auth-o2prefix" value="Bearer"></div>',
-  hawk: '<div class="auth-field"><label>HAWK AUTH ID</label><input type="text" id="auth-hawk-id" placeholder="Hawk Auth ID"></div><div class="auth-field"><label>HAWK AUTH KEY</label><input type="text" id="auth-hawk-key" placeholder="Hawk Auth Key"></div>',
-  aws: '<div class="auth-field"><label>ACCESS KEY</label><input type="text" id="auth-aws-ak" placeholder="AWS Access Key"></div><div class="auth-field"><label>SECRET KEY</label><input type="password" id="auth-aws-sk" placeholder="AWS Secret Key"></div><div class="auth-field"><label>REGION</label><input type="text" id="auth-aws-region" placeholder="us-east-1"></div><div class="auth-field"><label>SERVICE</label><input type="text" id="auth-aws-svc" placeholder="execute-api"></div>',
-  ntlm: '<div class="auth-field"><label>USERNAME</label><input type="text" id="auth-ntlm-user" placeholder="username"></div><div class="auth-field"><label>PASSWORD</label><input type="password" id="auth-ntlm-pass" placeholder="password"></div><div class="auth-field"><label>DOMAIN</label><input type="text" id="auth-ntlm-domain" placeholder="domain"></div>'
-};
-
-function renderAuthFields(data) {
-  data = data || {};
-  var type = document.getElementById('auth-type').value;
-  document.getElementById('auth-fields-container').innerHTML = AUTH_FIELDS[type] || '';
-  var tab = getActiveTab();
-  var authData = (tab && tab.authData) || {};
-  var map = {bearer:['auth-token'],basic:['auth-user','auth-pass'],apikey:['auth-key','auth-key-value'],oauth2:['auth-o2token','auth-o2prefix']};
-  if (map[type]) map[type].forEach(function(id) { var el = document.getElementById(id); if (el && authData[id]) el.value = authData[id]; });
-}
-
-function readAuthData() {
-  var data = {};
-  document.querySelectorAll('#auth-fields-container input, #auth-fields-container select').forEach(function(el) { if (el.id) data[el.id] = el.value; });
-  return data;
-}
-
-function getAuthHeaders() {
-  var type = document.getElementById('auth-type').value;
-  var h = {};
-  if (type === 'bearer') { var t = document.getElementById('auth-token'); if (t && t.value) h['Authorization'] = 'Bearer ' + t.value; }
-  else if (type === 'basic') { var u = document.getElementById('auth-user'); var p = document.getElementById('auth-pass'); if (u && p) h['Authorization'] = 'Basic ' + btoa((u.value || '') + ':' + (p.value || '')); }
-  else if (type === 'apikey') { var where = document.getElementById('auth-key-in'); if (where && where.value === 'header') { var k = document.getElementById('auth-key'); var v = document.getElementById('auth-key-value'); if (k && v && k.value && v.value) h[k.value] = v.value; } }
-  else if (type === 'oauth2') { var t2 = document.getElementById('auth-o2token'); var pre = document.getElementById('auth-o2prefix'); if (t2 && t2.value) h['Authorization'] = (pre ? pre.value : 'Bearer') + ' ' + t2.value; }
-  return h;
-}
-
-function getAuthQueryParams() {
-  var type = document.getElementById('auth-type').value;
-  var p = {};
-  if (type === 'apikey') { var where = document.getElementById('auth-key-in'); if (where && where.value === 'query') { var k = document.getElementById('auth-key'); var v = document.getElementById('auth-key-value'); if (k && v && k.value && v.value) p[k.value] = v.value; } }
-  return p;
-}
-
-function methodChanged() {
-  var sel = document.getElementById('method-select');
-  var m = sel.value;
-  var mc = {GET:'var(--get)',POST:'var(--post)',PUT:'var(--put)',PATCH:'var(--patch)',DELETE:'var(--delete)',HEAD:'var(--head)',OPTIONS:'var(--options)'};
-  sel.style.color = mc[m] || 'var(--text1)';
-  var tab = getActiveTab();
-  if (tab) { tab.method = m; renderTabsBar(); }
-}
-
-// ================================================================
-// CORS TOGGLE BUTTON
-// ================================================================
-function quickToggleCORS() {
-  APP.settings.corsProxy = !APP.settings.corsProxy;
-  if (!APP.settings.proxyUrl) {
-    APP.settings.proxyUrl = 'https://square-credit-8186.donthulanithish53.workers.dev/?url=';
-  }
-  saveState();
-  updateCORSBtn();
-  notify(APP.settings.corsProxy ? '⚡ CORS Proxy ENABLED — requests will now work!' : '🔴 CORS Proxy disabled', APP.settings.corsProxy ? 'success' : 'info');
-}
-
-function updateCORSBtn() {
-  var btn = document.getElementById('cors-toggle-btn');
-  if (!btn) return;
-  if (APP.settings.corsProxy) {
-    btn.textContent = '⚡ CORS: ON';
-    btn.style.background = 'rgba(76,175,136,0.2)';
-    btn.style.color = 'var(--ok)';
-    btn.style.borderColor = 'var(--ok)';
-  } else {
-    btn.textContent = '⚡ CORS: OFF';
-    btn.style.background = 'rgba(239,83,80,0.15)';
-    btn.style.color = 'var(--err)';
-    btn.style.borderColor = 'var(--err)';
-  }
-}
-
-// ================================================================
-// SEND REQUEST
-// ================================================================
-function cancelRequest() {
-  if (_abortController) { _abortController.abort(); }
-  document.getElementById('btn-cancel').style.display = 'none';
-  document.getElementById('btn-send').disabled = false;
-  document.getElementById('btn-send').textContent = 'Send ➤';
-}
-
-async function sendRequest() {
-  saveCurrentTab();
-  var tab = getActiveTab();
-  var method = document.getElementById('method-select').value;
-  var rawUrl = document.getElementById('url-input').value.trim();
-  if (!rawUrl) { notify('Please enter a URL', 'error'); return; }
-
-  var prereq = document.getElementById('prereq-script').value;
-  if (prereq.trim()) { var pmObj0 = buildPMObject(null); runScript(prereq, pmObj0); renderConsole(); }
-
-  var url = resolveVars(rawUrl);
-  var params = readKVTable('params').filter(function(r) { return r.enabled && r.key; });
-  var headerRows = readKVTable('headers').filter(function(r) { return r.enabled && r.key; });
-  var authHeaders = getAuthHeaders();
-  var authParams = getAuthQueryParams();
-
-  var finalUrl = url;
-  var allParams = Object.assign({}, Object.fromEntries(params.map(function(p) { return [resolveVars(p.key), resolveVars(p.value)]; })), authParams);
-  var paramStr = new URLSearchParams(allParams).toString();
-  if (paramStr) finalUrl += (url.indexOf('?') !== -1 ? '&' : '?') + paramStr;
-
-  var headers = {};
-  headerRows.forEach(function(h) { headers[resolveVars(h.key)] = resolveVars(h.value); });
-  Object.assign(headers, authHeaders);
-
-  var body = null;
-  var bodyType = _currentBodyType;
-  if (bodyType === 'raw') {
-    body = resolveVars(document.getElementById('raw-body').value);
-    var fmt = document.getElementById('raw-format').value;
-    if (!headers['Content-Type']) {
-      var ctMap = {json:'application/json',xml:'application/xml',html:'text/html',text:'text/plain',javascript:'application/javascript'};
-      headers['Content-Type'] = ctMap[fmt] || 'text/plain';
-    }
-  } else if (bodyType === 'urlencoded') {
-    var rows = readKVTable('urlencoded').filter(function(r) { return r.enabled && r.key; });
-    body = rows.map(function(r) { return encodeURIComponent(resolveVars(r.key)) + '=' + encodeURIComponent(resolveVars(r.value)); }).join('&');
-    headers['Content-Type'] = 'application/x-www-form-urlencoded';
-  } else if (bodyType === 'formdata') {
-    var fd = new FormData();
-    document.querySelectorAll('#formdata-tbody tr').forEach(function(tr) {
-      var inputs = tr.querySelectorAll('input, select');
-      if (inputs[0].checked && inputs[1].value) fd.append(inputs[1].value, inputs[2].value);
-    });
-    body = fd;
-  } else if (bodyType === 'graphql') {
-    var query = document.getElementById('gql-query').value;
-    var variables = {};
-    try { variables = JSON.parse(document.getElementById('gql-vars').value || '{}'); } catch(e) {}
-    body = JSON.stringify({query: query, variables: variables});
-    headers['Content-Type'] = 'application/json';
-  } else if (bodyType === 'binary') {
-    var file = document.getElementById('binary-file').files[0];
-    if (file) { body = file; headers['Content-Type'] = file.type || 'application/octet-stream'; }
-  }
-
-  var proxyEnabled = APP.settings.corsProxy;
-  var proxyUrl = APP.settings.proxyUrl || 'https://square-credit-8186.donthulanithish53.workers.dev/?url=';
-  var fetchUrl = proxyEnabled ? proxyUrl + encodeURIComponent(finalUrl) : finalUrl;
-
-  var sendBtn = document.getElementById('btn-send');
-  var cancelBtn = document.getElementById('btn-cancel');
-  sendBtn.disabled = true;
-  sendBtn.textContent = 'Sending…';
-  cancelBtn.style.display = '';
-  var startTime = Date.now();
-  _abortController = new AbortController();
-
-  try {
-    var fetchOpts = {method: method, headers: headers, signal: _abortController.signal};
-    if (body && ['GET','HEAD'].indexOf(method) === -1) fetchOpts.body = body;
-    var resp = await fetch(fetchUrl, fetchOpts);
-    var elapsed = Date.now() - startTime;
-    var respBody = await resp.text();
-    var respHeaders = {};
-    resp.headers.forEach(function(v, k) { respHeaders[k] = v; });
-    var size = new Blob([respBody]).size;
-
-    var domain = new URL(finalUrl).hostname;
-    var setCookie = resp.headers.get('set-cookie');
-    if (setCookie) {
-      if (!APP.cookies[domain]) APP.cookies[domain] = {};
-      var parts = setCookie.split(';')[0].split('=');
-      if (parts[0]) APP.cookies[domain][parts[0].trim()] = (parts[1] || '').trim();
-      saveState();
-    }
-
-    var responseObj = {status: resp.status, statusText: resp.statusText, _body: respBody, _headers: respHeaders, _time: elapsed, _size: size};
-    tab.response = responseObj;
-
-    _testResults = [];
-    var tests = document.getElementById('tests-script').value;
-    if (tests.trim()) { var pmObj = buildPMObject(responseObj); runScript(tests, pmObj); }
-
-    addToHistory({method: method, url: rawUrl, status: resp.status, time: elapsed});
-    renderResponse(responseObj);
-    renderConsole();
-    renderTestResults();
-    notify(resp.status + ' ' + resp.statusText, resp.status < 400 ? 'success' : 'error');
-
-  } catch(e) {
-    var elapsed2 = Date.now() - startTime;
-    if (e.name === 'AbortError') {
-      notify('Request cancelled', 'info');
-    } else {
-      var msg = proxyEnabled ? e.message : e.message + ' — Click ⚡ CORS: OFF button to enable proxy';
-      renderErrorResponse(msg, elapsed2);
-      notify('Request failed', 'error');
-    }
-  } finally {
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Send ➤';
-    cancelBtn.style.display = 'none';
-    _abortController = null;
-  }
-}
-
-// ================================================================
-// RESPONSE RENDERING
-// ================================================================
-function syntaxHighlight(json) {
-  var str = JSON.stringify(json, null, 2);
-  str = str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  return str.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
-    var cls = 'json-number';
-    if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-string';
-    else if (/true|false/.test(match)) cls = 'json-bool';
-    else if (/null/.test(match)) cls = 'json-null';
-    return '<span class="' + cls + '">' + match + '</span>';
-  });
-}
-
-function renderResponse(resp) {
-  if (!resp) {
-    document.getElementById('resp-status-pill').style.display = 'none';
-    document.getElementById('resp-time-stat').style.display = 'none';
-    document.getElementById('resp-size-stat').style.display = 'none';
-    document.getElementById('resp-empty-hint').style.display = '';
-    document.getElementById('resp-actions').style.display = 'none';
-    document.getElementById('resp-pretty').innerHTML = '';
-    document.getElementById('resp-raw').textContent = '';
-    return;
-  }
-  var pill = document.getElementById('resp-status-pill');
-  pill.textContent = resp.status + ' ' + resp.statusText;
-  pill.className = 'status-pill s-' + Math.floor(resp.status / 100) + 'xx';
-  pill.style.display = '';
-  document.getElementById('resp-time-stat').style.display = '';
-  document.getElementById('resp-size-stat').style.display = '';
-  document.getElementById('resp-empty-hint').style.display = 'none';
-  document.getElementById('resp-actions').style.display = '';
-  document.getElementById('resp-time').textContent = resp._time + 'ms';
-  document.getElementById('resp-size').textContent = formatSize(resp._size);
-  var pretty = resp._body;
-  try { pretty = syntaxHighlight(JSON.parse(resp._body)); } catch(e) { pretty = escHtml(resp._body); }
-  document.getElementById('resp-pretty').innerHTML = pretty;
-  document.getElementById('resp-raw').textContent = resp._body;
-  var ct = (resp._headers && resp._headers['content-type']) || '';
-  if (ct.indexOf('html') !== -1) document.getElementById('resp-preview').srcdoc = resp._body;
-  var ht = document.getElementById('resp-headers-table');
-  ht.innerHTML = Object.entries(resp._headers || {}).map(function(entry) { return '<tr><td>' + escHtml(entry[0]) + '</td><td>' + escHtml(entry[1]) + '</td></tr>'; }).join('');
-  renderCookiesPanel();
-}
-
-function renderErrorResponse(msg, time) {
-  document.getElementById('resp-status-pill').textContent = 'Error';
-  document.getElementById('resp-status-pill').className = 'status-pill s-err';
-  document.getElementById('resp-status-pill').style.display = '';
-  document.getElementById('resp-time').textContent = time + 'ms';
-  document.getElementById('resp-time-stat').style.display = '';
-  document.getElementById('resp-size-stat').style.display = 'none';
-  document.getElementById('resp-empty-hint').style.display = 'none';
-  document.getElementById('resp-actions').style.display = 'none';
-  document.getElementById('resp-pretty').innerHTML = '<span style="color:var(--err)">' + escHtml(msg) + '</span>';
-  document.getElementById('resp-raw').textContent = msg;
-}
-
-function renderTestResults() {
-  var c = document.getElementById('test-results-container');
-  var badge = document.getElementById('test-count');
-  if (!_testResults.length) { c.innerHTML = '<div class="empty-state"><p>No tests ran.</p></div>'; badge.style.display = 'none'; return; }
-  var pass = _testResults.filter(function(t) { return t.pass; }).length;
-  badge.textContent = pass + '/' + _testResults.length;
-  badge.style.display = '';
-  c.innerHTML = '<div style="margin-bottom:12px;font-size:12px;color:var(--text2)">' + pass + ' / ' + _testResults.length + ' tests passed</div>' +
-    _testResults.map(function(t) {
-      return '<div class="test-result ' + (t.pass ? 'test-pass' : 'test-fail') + '"><span style="font-size:14px">' + (t.pass ? '✅' : '❌') + '</span><div><div class="test-name">' + escHtml(t.name) + '</div>' + (t.error ? '<div class="test-error">' + escHtml(t.error) + '</div>' : '') + '</div></div>';
-    }).join('');
-}
-
-function renderConsole() {
-  document.getElementById('console-output').innerHTML = _consoleLogs.map(function(l) {
-    return '<div class="console-entry c-' + l.type + '"><span class="c-type">' + l.type.toUpperCase() + '</span><span class="c-msg">' + escHtml(String(l.msg)) + '</span></div>';
-  }).join('');
-}
-
-function clearConsole() { _consoleLogs = []; renderConsole(); }
-
-function renderCookiesPanel() {
-  var panel = document.getElementById('resp-cookies-content');
-  var domains = Object.keys(APP.cookies);
-  if (!domains.length) { panel.innerHTML = '<div class="empty-state"><div class="empty-icon">🍪</div><p>No cookies stored.</p></div>'; return; }
-  panel.innerHTML = domains.map(function(domain) {
-    return '<div class="cookie-domain"><div class="cookie-domain-name">' + escHtml(domain) + '</div>' +
-      Object.entries(APP.cookies[domain]).map(function(entry) {
-        return '<div class="cookie-entry"><span class="cookie-name">' + escHtml(entry[0]) + '</span><span class="cookie-val">' + escHtml(entry[1]) + '</span></div>';
-      }).join('') + '</div>';
-  }).join('');
-}
-
-function copyResponse() { navigator.clipboard.writeText(document.getElementById('resp-raw').textContent).then(function() { notify('Copied!', 'success'); }); }
-function saveResponseToFile() {
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([document.getElementById('resp-raw').textContent], {type:'text/plain'}));
-  a.download = 'response.json'; a.click();
-}
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
-  return (bytes/1048576).toFixed(1) + ' MB';
-}
-
-// ================================================================
-// PANEL SWITCHING
-// ================================================================
-function switchReqPanel(id) {
-  document.querySelectorAll('.panel-tab').forEach(function(t) {
-    if (t.id === 'rt-' + id) t.classList.add('active');
-    else if (t.id && t.id.indexOf('rt-') === 0) t.classList.remove('active');
-  });
-  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
-  var el = document.getElementById('tp-' + id);
-  if (el) el.classList.add('active');
-}
-
-function switchRespPanel(id) {
-  ['body','headers','cookies','tests','console'].forEach(function(p) {
-    var t = document.getElementById('rp-' + p); if (t) t.classList.remove('active');
-    var panel = document.getElementById('rp-' + p + '-panel'); if (panel) panel.classList.remove('active');
-  });
-  var t2 = document.getElementById('rp-' + id); if (t2) t2.classList.add('active');
-  var panel2 = document.getElementById('rp-' + id + '-panel'); if (panel2) panel2.classList.add('active');
-}
-
-function switchBodyView(id) {
-  ['pretty','raw','preview'].forEach(function(v) {
-    var bv = document.getElementById('bv-' + v); if (bv) bv.classList.remove('active');
-    var rb = document.getElementById('resp-body-' + v); if (rb) rb.classList.remove('active');
-  });
-  var bv2 = document.getElementById('bv-' + id); if (bv2) bv2.classList.add('active');
-  var rb2 = document.getElementById('resp-body-' + id); if (rb2) rb2.classList.add('active');
-}
-
-function switchSidebar(id) {
-  ['collections','history','envs'].forEach(function(s) {
-    var st = document.getElementById('st-' + s); if (st) st.classList.remove('active');
-    var sp = document.getElementById('sp-' + s); if (sp) sp.classList.remove('active');
-  });
-  var st2 = document.getElementById('st-' + id); if (st2) st2.classList.add('active');
-  var sp2 = document.getElementById('sp-' + id); if (sp2) sp2.classList.add('active');
-}
-
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
-
-// ================================================================
-// HISTORY
-// ================================================================
-function toggleHistoryRecording() {
-  var on = document.getElementById('history-toggle').checked;
-  APP.settings.historyEnabled = on;
-  saveState();
-  var dot = document.getElementById('history-dot');
-  if (dot) dot.className = 'history-dot' + (on ? '' : ' off');
-  notify(on ? '✅ History recording ON' : '🔴 History recording OFF', 'info');
-}
-
-function addToHistory(entry) {
-  if (APP.settings.historyEnabled === false) return;
-  entry.id = uid();
-  entry.at = new Date().toLocaleTimeString();
-  entry.pinned = false;
-  APP.history.unshift(entry);
-  if (APP.history.length > 300) APP.history.pop();
-  saveState();
-  renderHistory();
-}
-
-function renderHistory() {
-  var list = document.getElementById('history-list');
-  var toggle = document.getElementById('history-toggle');
-  var dot = document.getElementById('history-dot');
-  var isOn = APP.settings.historyEnabled !== false;
-  if (toggle) toggle.checked = isOn;
-  if (dot) dot.className = 'history-dot' + (isOn ? '' : ' off');
-  if (!APP.history.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No history yet.<br>Send a request to start.</p></div>';
-    return;
-  }
-  var pinned = APP.history.filter(function(h) { return h.pinned; });
-  var recent = APP.history.filter(function(h) { return !h.pinned; });
-  var mc = {GET:'var(--get)',POST:'var(--post)',PUT:'var(--put)',PATCH:'var(--patch)',DELETE:'var(--delete)',HEAD:'var(--head)',OPTIONS:'var(--options)'};
-  function renderItem(h) {
-    return '<div class="history-item ' + (h.pinned ? 'pinned' : '') + '" onclick="loadFromHistory(\'' + h.id + '\')">' +
-      '<span class="method-badge" style="color:' + (mc[h.method] || 'var(--text2)') + '">' + h.method + '</span>' +
-      '<span class="history-url" title="' + escHtml(h.url) + '">' + escHtml(h.url) + '</span>' +
-      '<span class="history-time">' + h.at + '</span>' +
-      '<div class="history-actions" onclick="event.stopPropagation()">' +
-        '<button class="h-btn h-pin ' + (h.pinned ? 'is-pinned' : '') + '" title="' + (h.pinned ? 'Unpin' : 'Pin') + '" onclick="togglePin(\'' + h.id + '\')">' + (h.pinned ? '📌' : '📍') + '</button>' +
-        '<button class="h-btn h-del" title="Delete" onclick="deleteHistoryItem(\'' + h.id + '\')">🗑</button>' +
-      '</div>' +
-    '</div>';
-  }
-  var html = '';
-  if (pinned.length) { html += '<div class="hist-lbl pin-lbl">📌 PINNED</div>' + pinned.map(renderItem).join(''); }
-  if (recent.length) { if (pinned.length) html += '<div class="hist-lbl rec-lbl">🕐 RECENT</div>'; html += recent.map(renderItem).join(''); }
-  list.innerHTML = html;
-}
-
-function togglePin(id) {
-  var h = APP.history.find(function(x) { return x.id === id; });
-  if (!h) return;
-  h.pinned = !h.pinned;
-  APP.history.sort(function(a, b) { return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0); });
-  saveState(); renderHistory();
-  notify(h.pinned ? '📌 Pinned!' : 'Unpinned', 'info');
-}
-
-function deleteHistoryItem(id) {
-  APP.history = APP.history.filter(function(x) { return x.id !== id; });
-  saveState(); renderHistory();
-}
-
-function loadFromHistory(id) {
-  var h = APP.history.find(function(x) { return x.id === id; });
-  if (!h) return;
-  newTab({method: h.method, url: h.url, name: h.url});
-}
-
-function clearHistory() {
-  if (!confirm('Delete ALL history including pinned items?')) return;
-  APP.history = []; saveState(); renderHistory();
-  notify('History cleared', 'info');
-}
-
-function unpinAllHistory() {
-  APP.history.forEach(function(h) { h.pinned = false; });
-  saveState(); renderHistory();
-  notify('All items unpinned', 'info');
-}
-
-// ================================================================
-// COLLECTIONS
-// ================================================================
-function renderCollections() {
-  var query = document.getElementById('search-collections').value.toLowerCase();
-  var list = document.getElementById('collections-list');
-  var filtered = APP.collections.filter(function(c) { return c.name.toLowerCase().indexOf(query) !== -1; });
-  if (!filtered.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><p>No collections yet.<br>Create or import one.</p></div>'; return; }
-  list.innerHTML = filtered.map(function(c) {
-    return '<div class="collection-item" id="coll-' + c.id + '">' +
-      '<div class="collection-header" onclick="toggleCollection(\'' + c.id + '\')">' +
-        '<span class="collection-toggle" id="ct-' + c.id + '">▶</span>' +
-        '<span class="collection-name">' + escHtml(c.name) + '</span>' +
-        '<div class="collection-menu">' +
-          '<button class="btn-sm" title="Run all requests" onclick="runCollection(event,\'' + c.id + '\')">▶</button>' +
-          '<button class="btn-sm" onclick="addRequestToCollection(event,\'' + c.id + '\')">+</button>' +
-          '<button class="btn-sm" onclick="exportCollection(event,\'' + c.id + '\')">⬇</button>' +
-          '<button class="btn-sm" onclick="deleteCollection(event,\'' + c.id + '\')">🗑</button>' +
-        '</div>' +
-      '</div>' +
-      '<div class="collection-requests" id="cr-' + c.id + '">' +
-        (c.requests || []).map(function(r) {
-          return '<div class="request-item" onclick="loadCollectionRequest(\'' + c.id + '\',\'' + r.id + '\')">' +
-            '<span class="method-badge m-' + r.method + '">' + r.method + '</span>' +
-            '<span class="request-name">' + escHtml(r.name) + '</span>' +
-            '<div class="req-actions">' +
-              '<button class="kv-del" title="Duplicate" onclick="dupCollRequest(event,\'' + c.id + '\',\'' + r.id + '\')">⧉</button>' +
-              '<button class="kv-del" onclick="deleteCollRequest(event,\'' + c.id + '\',\'' + r.id + '\')">✕</button>' +
-            '</div>' +
-          '</div>';
-        }).join('') +
-        (!(c.requests || []).length ? '<div style="padding:8px;color:var(--text3);font-size:11px;">Empty collection</div>' : '') +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function toggleCollection(id) {
-  var cr = document.getElementById('cr-' + id); if (cr) cr.classList.toggle('open');
-  var ct = document.getElementById('ct-' + id); if (ct) ct.classList.toggle('open');
-}
-
-async function runCollection(e, collId) {
-  e.stopPropagation();
-  var coll = APP.collections.find(function(c) { return c.id === collId; });
-  if (!coll || !coll.requests || !coll.requests.length) { notify('No requests in collection', 'error'); return; }
-  var pass = 0, fail = 0, total = coll.requests.length;
-  notify('Running ' + total + ' requests...', 'info');
-  for (var i = 0; i < coll.requests.length; i++) {
-    var req = coll.requests[i];
-    try {
-      var proxyEnabled = APP.settings.corsProxy;
-      var proxyUrl = APP.settings.proxyUrl || 'https://square-credit-8186.donthulanithish53.workers.dev/?url=';
-      var url = resolveVars(req.url);
-      var fetchUrl = proxyEnabled ? proxyUrl + encodeURIComponent(url) : url;
-      var h = {};
-      (req.headers || []).filter(function(hh) { return hh.enabled && hh.key; }).forEach(function(hh) { h[hh.key] = hh.value; });
-      var opts = {method: req.method || 'GET', headers: h};
-      if (req.rawBody && ['GET','HEAD'].indexOf(req.method) === -1) { opts.body = req.rawBody; h['Content-Type'] = 'application/json'; }
-      var resp = await fetch(fetchUrl, opts);
-      if (resp.ok) pass++; else fail++;
-    } catch(ex) { fail++; }
-  }
-  notify('Run done: ✅ ' + pass + ' passed  ❌ ' + fail + ' failed', 'info');
-}
-
-function openNewCollectionModal() {
-  openModal('<div class="modal-overlay"><div class="modal modal-sm">' +
-    '<div class="modal-header"><span class="modal-title">New Collection</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body"><div class="form-group"><label>NAME</label><input id="new-coll-name" placeholder="My Collection" autofocus></div><div class="form-group"><label>DESCRIPTION</label><textarea id="new-coll-desc" rows="3" style="width:100%;resize:none;" placeholder="Optional"></textarea></div></div>' +
-    '<div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Cancel</button><button class="btn-primary" onclick="createCollection()">Create</button></div>' +
-  '</div></div>');
-  setTimeout(function() { var el = document.getElementById('new-coll-name'); if (el) el.focus(); }, 50);
-}
-
-function createCollection() {
-  var name = document.getElementById('new-coll-name').value.trim();
-  if (!name) { notify('Name required', 'error'); return; }
-  APP.collections.push({id:uid(), name:name, description:document.getElementById('new-coll-desc').value, requests:[], createdAt:new Date().toISOString()});
-  saveState(); renderCollections(); closeModal(); notify('Collection created!', 'success');
-}
-
-function deleteCollection(e, id) {
-  e.stopPropagation();
-  if (!confirm('Delete this collection?')) return;
-  APP.collections = APP.collections.filter(function(c) { return c.id !== id; });
-  saveState(); renderCollections();
-}
-
-function addRequestToCollection(e, collId) {
-  e.stopPropagation();
-  saveCurrentTab();
-  var tab = getActiveTab();
-  var coll = APP.collections.find(function(c) { return c.id === collId; });
-  if (!coll) return;
-  var name = prompt('Request name:', (tab && tab.name) || 'New Request');
-  if (!name) return;
-  if (!coll.requests) coll.requests = [];
-  coll.requests.push(Object.assign({id:uid(), name:name, method:(tab&&tab.method)||'GET', url:(tab&&tab.url)||''}, tab));
-  saveState(); renderCollections(); notify('Saved to collection!', 'success');
-}
-
-function saveToCollection() {
-  saveCurrentTab();
-  var tab = getActiveTab();
-  if (!APP.collections.length) { openNewCollectionModal(); return; }
-  openModal('<div class="modal-overlay"><div class="modal modal-sm">' +
-    '<div class="modal-header"><span class="modal-title">Save Request</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body">' +
-      '<div class="form-group"><label>REQUEST NAME</label><input id="save-req-name" value="' + escHtml((tab&&tab.name)||'New Request') + '"></div>' +
-      '<div class="form-group"><label>COLLECTION</label><select id="save-req-coll" style="width:100%">' + APP.collections.map(function(c) { return '<option value="' + c.id + '">' + escHtml(c.name) + '</option>'; }).join('') + '</select></div>' +
-    '</div>' +
-    '<div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Cancel</button><button class="btn-primary" onclick="doSaveToCollection()">Save</button></div>' +
-  '</div></div>');
-}
-
-function doSaveToCollection() {
-  var name = document.getElementById('save-req-name').value.trim();
-  var collId = document.getElementById('save-req-coll').value;
-  var coll = APP.collections.find(function(c) { return c.id === collId; });
-  var tab = getActiveTab();
-  if (!coll || !name) return;
-  if (!coll.requests) coll.requests = [];
-  coll.requests.push(Object.assign({id:uid(), name:name, method:(tab&&tab.method)||'GET', url:(tab&&tab.url)||''}, tab));
-  if (tab) tab.name = name;
-  saveState(); renderCollections(); renderTabsBar(); closeModal(); notify('Saved!', 'success');
-}
-
-function loadCollectionRequest(collId, reqId) {
-  var coll = APP.collections.find(function(c) { return c.id === collId; });
-  var req = coll && coll.requests && coll.requests.find(function(r) { return r.id === reqId; });
-  if (!req) return;
-  newTab(Object.assign({}, req));
-}
-
-function dupCollRequest(e, collId, reqId) {
-  e.stopPropagation();
-  var coll = APP.collections.find(function(c) { return c.id === collId; });
-  var req = coll && coll.requests && coll.requests.find(function(r) { return r.id === reqId; });
-  if (!req) return;
-  coll.requests.push(Object.assign({}, req, {id:uid(), name:req.name+' (copy)'}));
-  saveState(); renderCollections(); notify('Request duplicated!', 'success');
-}
-
-function deleteCollRequest(e, collId, reqId) {
-  e.stopPropagation();
-  var coll = APP.collections.find(function(c) { return c.id === collId; });
-  if (!coll) return;
-  coll.requests = coll.requests.filter(function(r) { return r.id !== reqId; });
-  saveState(); renderCollections();
-}
-
-function exportCollection(e, id) {
-  e.stopPropagation();
-  var coll = APP.collections.find(function(c) { return c.id === id; });
-  if (!coll) return;
-  var data = {info:{name:coll.name,schema:'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'},item:coll.requests};
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  a.download = coll.name.replace(/\s+/g,'_') + '.postman_collection.json';
-  a.click(); notify('Exported!', 'success');
-}
-
-function exportAllCollections() {
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(APP.collections,null,2)],{type:'application/json'}));
-  a.download = 'postmanweb_collections.json'; a.click();
-}
-
-// ================================================================
-// ENVIRONMENTS
-// ================================================================
-function renderEnvs() {
-  var list = document.getElementById('envs-list');
-  if (!APP.environments.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">🌍</div><p>No environments.<br>Create one to use variables.</p></div>'; return; }
-  list.innerHTML = APP.environments.map(function(e) {
-    return '<div class="env-item ' + (e.id===APP.activeEnvId?'active-env':'') + '" onclick="setActiveEnv(\'' + e.id + '\')">' +
-      '<div class="env-dot ' + (e.id===APP.activeEnvId?'active':'') + '"></div>' +
-      '<span class="env-name">' + escHtml(e.name) + '</span>' +
-      '<button class="btn-sm" onclick="editEnv(event,\'' + e.id + '\')">Edit</button>' +
-      '<button class="btn-sm" onclick="deleteEnv(event,\'' + e.id + '\')">🗑</button>' +
-    '</div>';
-  }).join('');
-}
-
-function setActiveEnv(id) {
-  APP.activeEnvId = APP.activeEnvId === id ? null : id;
-  saveState(); renderEnvs();
-  var env = APP.environments.find(function(e) { return e.id === APP.activeEnvId; });
-  notify(APP.activeEnvId ? 'Env: ' + (env&&env.name) : 'No environment active', 'info');
-}
-
-function openNewEnvModal() {
-  openModal('<div class="modal-overlay"><div class="modal modal-sm">' +
-    '<div class="modal-header"><span class="modal-title">New Environment</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body"><div class="form-group"><label>NAME</label><input id="new-env-name" placeholder="Production" autofocus></div></div>' +
-    '<div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Cancel</button><button class="btn-primary" onclick="createEnv()">Create</button></div>' +
-  '</div></div>');
-  setTimeout(function() { var el = document.getElementById('new-env-name'); if (el) el.focus(); }, 50);
-}
-
-function createEnv() {
-  var name = document.getElementById('new-env-name').value.trim();
-  if (!name) return;
-  var env = {id:uid(), name:name, variables:{}};
-  APP.environments.push(env);
-  saveState(); renderEnvs(); closeModal();
-  editEnv(null, env.id);
-}
-
-function editEnv(e, id) {
-  if (e) e.stopPropagation();
-  var env = APP.environments.find(function(x) { return x.id === id; });
-  if (!env) return;
-  var vars = Object.entries(env.variables || {});
-  openModal('<div class="modal-overlay"><div class="modal modal-lg">' +
-    '<div class="modal-header"><span class="modal-title">Edit: ' + escHtml(env.name) + '</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body">' +
-      '<div id="env-vars-list">' + vars.map(function(entry) { return '<div class="env-var-row"><input placeholder="Variable" value="' + escHtml(entry[0]) + '"><input placeholder="Value" value="' + escHtml(entry[1]) + '"><button class="env-var-del" onclick="this.parentElement.remove()">✕</button></div>'; }).join('') + '</div>' +
-      '<button class="btn-add-row" onclick="addEnvVarRow()" style="margin-top:8px">+ Add Variable</button>' +
-    '</div>' +
-    '<div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Cancel</button><button class="btn-primary" onclick="saveEnv(\'' + id + '\')">Save</button></div>' +
-  '</div></div>');
-}
-
-function addEnvVarRow() {
-  var div = document.createElement('div'); div.className = 'env-var-row';
-  div.innerHTML = '<input placeholder="Variable"><input placeholder="Value"><button class="env-var-del" onclick="this.parentElement.remove()">✕</button>';
-  document.getElementById('env-vars-list').appendChild(div);
-}
-
-function saveEnv(id) {
-  var env = APP.environments.find(function(x) { return x.id === id; });
-  if (!env) return;
-  env.variables = {};
-  document.querySelectorAll('#env-vars-list .env-var-row').forEach(function(row) {
-    var inputs = row.querySelectorAll('input');
-    if (inputs[0].value.trim()) env.variables[inputs[0].value.trim()] = inputs[1].value;
-  });
-  saveState(); renderEnvs(); closeModal(); notify('Environment saved!', 'success');
-}
-
-function deleteEnv(e, id) {
-  e.stopPropagation();
-  if (!confirm('Delete environment?')) return;
-  APP.environments = APP.environments.filter(function(x) { return x.id !== id; });
-  if (APP.activeEnvId === id) APP.activeEnvId = null;
-  saveState(); renderEnvs();
-}
-
-function openEnvModal() { switchSidebar('envs'); document.getElementById('sidebar').classList.remove('collapsed'); }
-
-// ================================================================
-// GLOBALS
-// ================================================================
-function openGlobalsModal() {
-  var vars = Object.entries(APP.globals);
-  openModal('<div class="modal-overlay"><div class="modal modal-lg">' +
-    '<div class="modal-header"><span class="modal-title">🌐 Global Variables</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body">' +
-      '<div id="globals-list">' + vars.map(function(entry) { return '<div class="env-var-row"><input placeholder="Variable" value="' + escHtml(entry[0]) + '"><input placeholder="Value" value="' + escHtml(entry[1]) + '"><button class="env-var-del" onclick="this.parentElement.remove()">✕</button></div>'; }).join('') + '</div>' +
-      '<button class="btn-add-row" onclick="addGlobalVarRow()">+ Add Variable</button>' +
-    '</div>' +
-    '<div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Cancel</button><button class="btn-primary" onclick="saveGlobals()">Save</button></div>' +
-  '</div></div>');
-}
-
-function addGlobalVarRow() {
-  var div = document.createElement('div'); div.className = 'env-var-row';
-  div.innerHTML = '<input placeholder="Variable"><input placeholder="Value"><button class="env-var-del" onclick="this.parentElement.remove()">✕</button>';
-  document.getElementById('globals-list').appendChild(div);
-}
-
-function saveGlobals() {
-  APP.globals = {};
-  document.querySelectorAll('#globals-list .env-var-row').forEach(function(row) {
-    var inputs = row.querySelectorAll('input');
-    if (inputs[0].value.trim()) APP.globals[inputs[0].value.trim()] = inputs[1].value;
-  });
-  saveState(); closeModal(); notify('Globals saved!', 'success');
-}
-
-// ================================================================
-// CODE GENERATION
-// ================================================================
-function openCodegenModal() {
-  saveCurrentTab();
-  openModal('<div class="modal-overlay"><div class="modal modal-lg">' +
-    '<div class="modal-header"><span class="modal-title">{ } Code Snippet</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body">' +
-      '<div class="codegen-lang-tabs">' + ['cURL','JS Fetch','JS Axios','Python','Java','C#','Go','PHP','Ruby','Swift'].map(function(l) { return '<button class="lang-tab ' + (l==='cURL'?'active':'') + '" onclick="switchCodegenLang(\'' + l + '\',this)">' + l + '</button>'; }).join('') + '</div>' +
-      '<textarea id="codegen-output" readonly></textarea>' +
-      '<button class="btn-primary" style="margin-top:8px" onclick="copyCodegen()">📋 Copy Code</button>' +
-    '</div>' +
-  '</div></div>');
-  generateCode('cURL');
-}
-
-function switchCodegenLang(lang, btn) {
-  document.querySelectorAll('.lang-tab').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active'); generateCode(lang);
-}
-
-function generateCode(lang) {
-  var method = document.getElementById('method-select').value;
-  var url = document.getElementById('url-input').value;
-  var headers = readKVTable('headers').filter(function(h) { return h.enabled && h.key; });
-  var authHeaders = getAuthHeaders();
-  var body = document.getElementById('raw-body').value;
-  var bodyType = _currentBodyType;
-  var allHeaders = Object.assign({}, Object.fromEntries(headers.map(function(h) { return [h.key, h.value]; })), authHeaders);
-  var hj = JSON.stringify(allHeaders, null, 2);
-  var out = '';
-  if (lang === 'cURL') {
-    out = 'curl --request ' + method + ' \\\n  --url \'' + url + '\'';
-    Object.entries(allHeaders).forEach(function(entry) { out += ' \\\n  --header \'' + entry[0] + ': ' + entry[1] + '\''; });
-    if (bodyType === 'raw' && body) out += ' \\\n  --data \'' + body.replace(/'/g,"'\\''") + '\'';
-  } else if (lang === 'JS Fetch') {
-    var opts = {method:method,headers:allHeaders};
-    if (bodyType==='raw'&&body) opts.body = body;
-    out = 'const res = await fetch(\'' + url + '\', ' + JSON.stringify(opts,null,2) + ');\nconst data = await res.json();\nconsole.log(data);';
-  } else if (lang === 'JS Axios') {
-    var cfg = {method:method.toLowerCase(),url:url,headers:allHeaders};
-    if (bodyType==='raw'&&body) { try{cfg.data=JSON.parse(body);}catch(e){cfg.data=body;} }
-    out = 'import axios from \'axios\';\nconst res = await axios(' + JSON.stringify(cfg,null,2) + ');\nconsole.log(res.data);';
-  } else if (lang === 'Python') {
-    out = 'import requests\n\nurl = "' + url + '"\nheaders = ' + hj + '\n';
-    if (bodyType==='raw'&&body) out += '\npayload = ' + body + '\nresponse = requests.' + method.toLowerCase() + '(url, json=payload, headers=headers)';
-    else out += '\nresponse = requests.' + method.toLowerCase() + '(url, headers=headers)';
-    out += '\nprint(response.status_code)\nprint(response.json())';
-  } else if (lang === 'Java') {
-    out = 'OkHttpClient client = new OkHttpClient();\nRequest request = new Request.Builder()\n  .url("' + url + '")\n' + Object.entries(allHeaders).map(function(entry) { return '  .addHeader("' + entry[0] + '", "' + entry[1] + '")'; }).join('\n') + '\n  .build();\nResponse response = client.newCall(request).execute();';
-  } else if (lang === 'C#') {
-    out = 'var client = new RestClient("' + url + '");\nvar request = new RestRequest(Method.' + method + ');\n' + Object.entries(allHeaders).map(function(entry) { return 'request.AddHeader("' + entry[0] + '", "' + entry[1] + '");'; }).join('\n') + '\nIRestResponse response = client.Execute(request);';
-  } else if (lang === 'Go') {
-    out = 'package main\nimport ("fmt"; "net/http")\nfunc main() {\n  req, _ := http.NewRequest("' + method + '", "' + url + '", nil)\n' + Object.entries(allHeaders).map(function(entry) { return '  req.Header.Add("' + entry[0] + '", "' + entry[1] + '")'; }).join('\n') + '\n  res, _ := http.DefaultClient.Do(req)\n  fmt.Println(res.Status)\n}';
-  } else if (lang === 'PHP') {
-    out = '<?php\n$client = new \\GuzzleHttp\\Client();\n$response = $client->request(\'' + method + '\', \'' + url + '\', [\n  \'headers\' => ' + hj + '\n]);\necho $response->getBody();';
-  } else if (lang === 'Ruby') {
-    out = 'require \'net/http\'\nuri = URI("' + url + '")\nreq = Net::HTTP::' + method.charAt(0)+method.slice(1).toLowerCase() + '.new(uri)\n' + Object.entries(allHeaders).map(function(entry) { return 'req["' + entry[0] + '"] = "' + entry[1] + '"'; }).join('\n') + '\nres = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |h| h.request(req) }\nputs res.read_body';
-  } else if (lang === 'Swift') {
-    out = 'import Foundation\nvar request = URLRequest(url: URL(string: "' + url + '")!)\nrequest.httpMethod = "' + method + '"\n' + Object.entries(allHeaders).map(function(entry) { return 'request.setValue("' + entry[1] + '", forHTTPHeaderField: "' + entry[0] + '")'; }).join('\n') + '\nURLSession.shared.dataTask(with: request) { data, _, _ in\n  if let d = data { print(String(data: d, encoding: .utf8)!) }\n}.resume()';
-  }
-  document.getElementById('codegen-output').value = out;
-}
-
-function copyCodegen() { navigator.clipboard.writeText(document.getElementById('codegen-output').value).then(function() { notify('Copied!', 'success'); }); }
-
-// ================================================================
-// WEBSOCKET
-// ================================================================
-function openWSModal() {
-  openModal('<div class="modal-overlay"><div class="modal modal-lg">' +
-    '<div class="modal-header"><span class="modal-title">⚡ WebSocket Client</span><button class="modal-close" onclick="closeWSModal()">✕</button></div>' +
-    '<div class="modal-body">' +
-      '<div style="display:flex;gap:8px;margin-bottom:12px">' +
-        '<input id="ws-url" type="text" placeholder="wss://echo.websocket.org" style="flex:1;font-family:monospace" value="wss://echo.websocket.org">' +
-        '<button id="ws-conn-btn" onclick="wsToggle()" style="padding:7px 20px;border-radius:6px;font-weight:700;background:var(--ok);color:#fff;border:none;cursor:pointer;">Connect</button>' +
-      '</div>' +
-      '<div id="ws-messages"></div>' +
-      '<div style="display:flex;gap:8px">' +
-        '<input id="ws-msg-input" placeholder="Message to send..." style="flex:1;font-family:monospace" onkeydown="if(event.key===\'Enter\')wsSend()">' +
-        '<button onclick="wsSend()" style="padding:7px 16px;background:var(--accent);color:#fff;border-radius:6px;font-weight:700;border:none;cursor:pointer;">Send</button>' +
-      '</div>' +
-    '</div>' +
-  '</div></div>');
-}
-
-function closeWSModal() { if (_wsConn) { _wsConn.close(); _wsConn = null; } closeModal(); }
-
-function wsToggle() {
-  if (_wsConn && _wsConn.readyState === WebSocket.OPEN) {
-    _wsConn.close(); _wsConn = null;
-    document.getElementById('ws-conn-btn').textContent = 'Connect';
-    document.getElementById('ws-conn-btn').style.background = 'var(--ok)';
-    wsLog('Disconnected', 'ws-sys');
-  } else {
-    var url = document.getElementById('ws-url').value;
-    try {
-      _wsConn = new WebSocket(url);
-      wsLog('Connecting to ' + url + '...', 'ws-sys');
-      _wsConn.onopen = function() { wsLog('✅ Connected!', 'ws-sys'); document.getElementById('ws-conn-btn').textContent = 'Disconnect'; document.getElementById('ws-conn-btn').style.background = 'var(--err)'; };
-      _wsConn.onmessage = function(e) { wsLog('← ' + e.data, 'ws-recv'); };
-      _wsConn.onerror = function() { wsLog('❌ Connection error', 'ws-sys'); };
-      _wsConn.onclose = function() { wsLog('Connection closed', 'ws-sys'); };
-    } catch(e) { wsLog('Error: ' + e.message, 'ws-sys'); }
-  }
-}
-
-function wsSend() {
-  var msg = document.getElementById('ws-msg-input').value;
-  if (!msg || !_wsConn || _wsConn.readyState !== WebSocket.OPEN) { notify('Not connected', 'error'); return; }
-  _wsConn.send(msg); wsLog('→ ' + msg, 'ws-sent');
-  document.getElementById('ws-msg-input').value = '';
-}
-
-function wsLog(msg, cls) {
-  var d = document.getElementById('ws-messages'); if (!d) return;
-  var div = document.createElement('div'); div.className = 'ws-msg ' + cls; div.textContent = msg;
-  d.appendChild(div); d.scrollTop = d.scrollHeight;
-}
-
-// ================================================================
-// IMPORT / EXPORT
-// ================================================================
-function openImportModal() {
-  openModal('<div class="modal-overlay"><div class="modal">' +
-    '<div class="modal-header"><span class="modal-title">⬆ Import</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body">' +
-      '<div class="form-group"><label>PASTE POSTMAN COLLECTION JSON OR cURL COMMAND</label>' +
-        '<textarea id="import-text" style="width:100%;min-height:160px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px;color:var(--text1);resize:vertical;font-family:\'JetBrains Mono\',monospace;font-size:12px;" placeholder="Paste Postman collection JSON or curl command..."></textarea>' +
-      '</div>' +
-      '<div class="form-group"><label>OR UPLOAD FILE (.json)</label><input type="file" id="import-file" accept=".json,.yaml,.yml" onchange="importFromFile(this)"></div>' +
-    '</div>' +
-    '<div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Cancel</button><button class="btn-primary" onclick="doImport()">Import</button></div>' +
-  '</div></div>');
-}
-
-function importFromFile(input) {
-  var file = input.files[0]; if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) { document.getElementById('import-text').value = e.target.result; };
-  reader.readAsText(file);
-}
-
-function doImport() {
-  var text = document.getElementById('import-text').value.trim();
-  if (!text) { notify('Nothing to import', 'error'); return; }
-  if (text.indexOf('curl') === 0) { importFromCurl(text); closeModal(); return; }
-  try {
-    var data = JSON.parse(text);
-    if (data.info && data.item) {
-      var coll = {id:uid(), name:data.info.name||'Imported', requests:[], description:''};
-      function flat(items) {
-        items.forEach(function(item) {
-          if (item.request) {
-            coll.requests.push({id:uid(), name:item.name, method:item.request.method||'GET',
-              url: typeof item.request.url === 'string' ? item.request.url : (item.request.url&&item.request.url.raw)||'',
-              headers: (item.request.header||[]).map(function(h) { return {id:uid(),enabled:true,key:h.key,value:h.value,desc:''}; }),
-              rawBody: (item.request.body&&item.request.body.raw)||'',
-              bodyType: (item.request.body&&item.request.body.mode)||'none'
-            });
-          }
-          if (item.item) flat(item.item);
-        });
-      }
-      flat(data.item);
-      APP.collections.push(coll); saveState(); renderCollections(); closeModal();
-      notify('Imported "' + coll.name + '" — ' + coll.requests.length + ' requests!', 'success'); return;
-    }
-    if (Array.isArray(data) && data[0] && data[0].requests) {
-      APP.collections.push.apply(APP.collections, data); saveState(); renderCollections(); closeModal();
-      notify('Imported ' + data.length + ' collections!', 'success'); return;
-    }
-    notify('Unrecognized format', 'error');
-  } catch(e) { notify('Invalid JSON: ' + e.message, 'error'); }
-}
-
-function importFromCurl(curl) {
-  try {
-    var methodMatch = curl.match(/-X\s+(\w+)/i);
-    var urlMatch = curl.match(/curl\s+(?:-[^\s]+\s+)*['"]?([^\s'"]+)['"]?/);
-    var headerMatches = Array.from(curl.matchAll(/-H\s+['"]([^'"]+)['"]/gi));
-    var dataMatch = curl.match(/(?:--data|--data-raw|-d)\s+['"]([^'"]*)['"]/i);
-    var method = (methodMatch && methodMatch[1].toUpperCase()) || 'GET';
-    var url = (urlMatch && urlMatch[1]) || '';
-    var headers = headerMatches.map(function(m) { var parts = m[1].split(':'); return {id:uid(),enabled:true,key:parts[0].trim(),value:parts.slice(1).join(':').trim(),desc:''}; });
-    var body = (dataMatch && dataMatch[1]) || '';
-    newTab({method:method, url:url, name:url, headers:headers, rawBody:body, bodyType:body?'raw':'none'});
-    notify('Imported from cURL!', 'success');
-  } catch(e) { notify('cURL parse failed', 'error'); }
-}
-
-// ================================================================
-// COOKIE MANAGER
-// ================================================================
-function openCookieManagerModal() {
-  openModal('<div class="modal-overlay"><div class="modal modal-lg">' +
-    '<div class="modal-header"><span class="modal-title">🍪 Cookie Manager</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body">' +
-      '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
-        '<input id="ck-domain" placeholder="domain (e.g. api.example.com)" style="flex:1;min-width:150px">' +
-        '<input id="ck-name" placeholder="Cookie Name" style="width:130px">' +
-        '<input id="ck-value" placeholder="Cookie Value" style="flex:1;min-width:100px">' +
-        '<button class="btn-primary" onclick="addCookieManual()" style="white-space:nowrap">+ Add</button>' +
-      '</div>' +
-      '<div id="cookie-mgr-list">' + renderCookieMgrList() + '</div>' +
-    '</div>' +
-    '<div class="modal-footer"><button class="btn-danger" onclick="clearAllCookies()">🗑 Clear All</button><button class="btn-secondary" onclick="closeModal()">Close</button></div>' +
-  '</div></div>');
-}
-
-function renderCookieMgrList() {
-  var domains = Object.keys(APP.cookies);
-  if (!domains.length) return '<div class="empty-state"><div class="empty-icon">🍪</div><p>No cookies stored.</p></div>';
-  return domains.map(function(domain) {
-    return '<div class="cookie-domain"><div class="cookie-domain-name">' + escHtml(domain) + '</div>' +
-      Object.entries(APP.cookies[domain]).map(function(entry) {
-        return '<div class="cookie-entry"><span class="cookie-name">' + escHtml(entry[0]) + '</span><span class="cookie-val">' + escHtml(entry[1]) + '</span>' +
-          '<button style="color:var(--err);margin-left:auto;font-size:12px;cursor:pointer;background:none;border:none;" onclick="delCookieMgr(\'' + escHtml(domain) + '\',\'' + escHtml(entry[0]) + '\')">✕</button>' +
-        '</div>';
-      }).join('') +
-    '</div>';
-  }).join('');
-}
-
-function addCookieManual() {
-  var domain = document.getElementById('ck-domain').value.trim();
-  var name = document.getElementById('ck-name').value.trim();
-  var value = document.getElementById('ck-value').value;
-  if (!domain || !name) { notify('Domain and name required', 'error'); return; }
-  if (!APP.cookies[domain]) APP.cookies[domain] = {};
-  APP.cookies[domain][name] = value;
-  saveState();
-  document.getElementById('cookie-mgr-list').innerHTML = renderCookieMgrList();
-  notify('Cookie added!', 'success');
-}
-
-function delCookieMgr(domain, name) {
-  if (APP.cookies[domain]) {
-    delete APP.cookies[domain][name];
-    if (!Object.keys(APP.cookies[domain]).length) delete APP.cookies[domain];
-  }
-  saveState();
-  document.getElementById('cookie-mgr-list').innerHTML = renderCookieMgrList();
-}
-
-function clearAllCookies() {
-  if (!confirm('Clear all cookies?')) return;
-  APP.cookies = {}; saveState();
-  document.getElementById('cookie-mgr-list').innerHTML = renderCookieMgrList();
-  notify('All cookies cleared', 'info');
-}
-
-// ================================================================
-// SETTINGS
-// ================================================================
-function openSettingsModal() {
-  var s = APP.settings;
-  openModal('<div class="modal-overlay"><div class="modal modal-lg">' +
-    '<div class="modal-header"><span class="modal-title">⚙ Settings</span><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="modal-body">' +
-      '<div class="settings-section">' +
-        '<div class="settings-title">CORS PROXY</div>' +
-        '<div class="settings-row"><div><div class="settings-label">Enable CORS Proxy</div><div class="settings-desc">Route requests through your Cloudflare Worker to fix CORS errors</div></div><label class="toggle"><input type="checkbox" id="set-cors" ' + (s.corsProxy?'checked':'') + ' onchange="updateCORSBtnFromSettings()"><span class="toggle-slider"></span></label></div>' +
-        '<div class="form-group" style="margin-top:10px"><label>PROXY URL</label><input id="set-proxy-url" value="' + escHtml(s.proxyUrl || 'https://square-credit-8186.donthulanithish53.workers.dev/?url=') + '"></div>' +
-        '<button class="btn-sm" style="margin-top:8px" onclick="testWorker()">🔍 Test Worker</button>' +
-        '<span id="worker-test-result" style="font-size:11px;margin-left:10px;color:var(--text3)"></span>' +
-      '</div>' +
-      '<div class="settings-section">' +
-        '<div class="settings-title">TOOLS</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-          '<button class="btn-sm btn-accent" onclick="closeModal();openGlobalsModal()">🌐 Global Variables</button>' +
-          '<button class="btn-sm btn-accent" onclick="closeModal();openCookieManagerModal()">🍪 Cookie Manager</button>' +
-        '</div>' +
-      '</div>' +
-      '<div class="settings-section">' +
-        '<div class="settings-title">DATA MANAGEMENT</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-          '<button class="btn-sm" onclick="exportAllData()">⬇ Export All</button>' +
-          '<button class="btn-sm" onclick="importAllData()">⬆ Import All</button>' +
-          '<button class="btn-danger" onclick="resetAllData()">🗑 Reset Everything</button>' +
-        '</div>' +
-      '</div>' +
-      '<div class="settings-section">' +
-        '<div class="settings-title">KEYBOARD SHORTCUTS</div>' +
-        '<div style="font-size:11px;color:var(--text3);line-height:2.2">' +
-          '<b style="color:var(--text2)">Ctrl+Enter</b> — Send Request &nbsp;&nbsp;' +
-          '<b style="color:var(--text2)">Ctrl+T</b> — New Tab &nbsp;&nbsp;' +
-          '<b style="color:var(--text2)">Ctrl+W</b> — Close Tab<br>' +
-          '<b style="color:var(--text2)">Ctrl+S</b> — Save to Collection &nbsp;&nbsp;' +
-          '<b style="color:var(--text2)">Ctrl+\\</b> — Toggle Sidebar' +
-        '</div>' +
-      '</div>' +
-      '<div class="settings-section">' +
-        '<div class="settings-title">ABOUT</div>' +
-        '<p style="font-size:12px;color:var(--text3);line-height:1.7">PostmanWeb v2.0 — Full API Platform in your browser.<br>All data stored locally. No server. No login required.<br>Worker: <span style="color:var(--accent)">square-credit-8186.donthulanithish53.workers.dev</span></p>' +
-      '</div>' +
-    '</div>' +
-    '<div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Cancel</button><button class="btn-primary" onclick="saveSettings()">Save Settings</button></div>' +
-  '</div></div>');
-}
-
-function updateCORSBtnFromSettings() {
-  var cb = document.getElementById('set-cors');
-  if (cb) { APP.settings.corsProxy = cb.checked; saveState(); updateCORSBtn(); }
-}
-
-async function testWorker() {
-  var proxyUrl = document.getElementById('set-proxy-url').value.trim();
-  var result = document.getElementById('worker-test-result');
-  result.textContent = 'Testing...'; result.style.color = 'var(--text3)';
-  try {
-    var testUrl = proxyUrl + encodeURIComponent('https://httpbin.org/get');
-    var r = await fetch(testUrl, {signal: AbortSignal.timeout(8000)});
-    if (r.ok) { result.textContent = '✅ Worker is working!'; result.style.color = 'var(--ok)'; }
-    else { result.textContent = '⚠ Worker replied: ' + r.status; result.style.color = 'var(--warn)'; }
-  } catch(e) { result.textContent = '❌ Failed: ' + e.message; result.style.color = 'var(--err)'; }
-}
-
-function saveSettings() {
-  APP.settings.corsProxy = document.getElementById('set-cors').checked;
-  APP.settings.proxyUrl = document.getElementById('set-proxy-url').value.trim();
-  saveState(); closeModal(); updateCORSBtn(); notify('Settings saved!', 'success');
-}
-
-function exportAllData() {
-  var data = {collections:APP.collections,environments:APP.environments,globals:APP.globals,history:APP.history,settings:APP.settings};
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  a.download = 'postmanweb_backup.json'; a.click();
-}
-
-function importAllData() {
-  var input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
-  input.onchange = function(e) {
-    var file = e.target.files[0]; if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      try {
-        var data = JSON.parse(ev.target.result);
-        if (data.collections) APP.collections = data.collections;
-        if (data.environments) APP.environments = data.environments;
-        if (data.globals) APP.globals = data.globals;
-        if (data.history) APP.history = data.history;
-        if (data.settings) APP.settings = data.settings;
-        saveState(); renderAll(); notify('Data imported!', 'success');
-      } catch(e) { notify('Invalid file', 'error'); }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
-
-function resetAllData() {
-  if (!confirm('Delete ALL data? This cannot be undone!')) return;
-  localStorage.clear(); location.reload();
-}
-
-// ================================================================
-// RESIZE HANDLE
-// ================================================================
-function initResizeHandle() {
-  var handle = document.getElementById('resize-handle');
-  var wrap = document.getElementById('split-wrap');
-  var dragging = false, startY = 0, startH = 0;
-  handle.addEventListener('mousedown', function(e) {
-    dragging = true; startY = e.clientY;
-    startH = document.getElementById('req-panels').offsetHeight;
-    document.body.style.userSelect = 'none';
-  });
-  document.addEventListener('mousemove', function(e) {
-    if (!dragging) return;
-    var newH = Math.max(120, Math.min(wrap.offsetHeight - 100, startH + (e.clientY - startY)));
-    document.getElementById('req-panels').style.height = newH + 'px';
-  });
-  document.addEventListener('mouseup', function() { dragging = false; document.body.style.userSelect = ''; });
-}
-
-// ================================================================
-// INIT
-// ================================================================
-function renderAll() { renderTabsBar(); renderCollections(); renderHistory(); renderEnvs(); }
-
-function init() {
-  newTab();
-  renderAll();
-  initResizeHandle();
-  updateCORSBtn();
-
-  document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); sendRequest(); }
-    if ((e.ctrlKey || e.metaKey) && e.key === 't') { e.preventDefault(); newTab(); }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'w') { e.preventDefault(); closeTab(APP.activeTabId); }
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveToCollection(); }
-    if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); toggleSidebar(); }
-  });
-
-  document.getElementById('url-input').addEventListener('input', function(e) {
-    var tab = getActiveTab();
-    if (tab && e.target.value) {
-      tab.url = e.target.value;
-      tab.name = e.target.value.replace(/^https?:\/\//, '').substring(0, 30) || 'New Request';
-      renderTabsBar();
-    }
-  });
-
-  document.getElementById('method-select').addEventListener('change', methodChanged);
-}
-
-init();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
