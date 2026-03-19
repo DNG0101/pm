@@ -2104,7 +2104,7 @@ function openSettingsModal() {
               <div><div class="settings-label">Enable CORS Proxy</div><div class="settings-desc">Route requests through a CORS proxy to bypass browser restrictions</div></div>
               <label class="toggle"><input type="checkbox" id="set-cors" ${s.corsProxy?'checked':''}><span class="toggle-slider"></span></label>
             </div>
-            <div class="form-group" style="margin-top:10px"><label>PROXY URL</label><input id="set-proxy-url" value="${s.proxyUrl||'https://corsproxy.io/?'}" placeholder="https://corsproxy.io/?"></div>
+            <div class="form-group" style="margin-top:10px"><label>PROXY URL</label><input id="set-proxy-url" value="${s.proxyUrl: APP.settings?.proxyUrl || 'https://postmanweb-proxy.YOUR_SUBDOMAIN.workers.dev/?url=https://square-credit-8186.donthulanithish53.workers.dev'}" placeholder="https://corsproxy.io/?"></div>
           </div>
           <div class="settings-section">
             <div class="settings-title">Global Variables</div>
