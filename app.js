@@ -1,5 +1,7 @@
 /* ============================================================
-   POSTMANWEB v4 — app.js
+   POSTMANWEB v4 — app1.js  (Module 1 of 2)
+   State · Storage · Helpers · Crypto · Variables · Tabs ·
+   KV Tables · Body · Auth · CORS · Mock · Send Request
    ============================================================ */
 'use strict';
 
@@ -26,7 +28,6 @@ const S = {
   }),
 };
 
-// Normalise legacy history: pinned must be explicit true, never undefined/null
 function fixHistory(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.map(h => ({ ...h, pinned: h.pinned === true }));
@@ -40,12 +41,12 @@ let _wsConn      = null;
 let _localVars   = {};
 let _iterInfo    = { iteration:0, iterationCount:1, dataRow:{} };
 
-// Current response object — needed by enlarge/fullscreen
+// Current response — needed by enlarge / binary download
 let _lastResponse = null;
 
 // Advanced repeat state
-let _advEntry    = null;   // history entry being repeated
-let _advRunning  = false;
+let _advEntry   = null;
+let _advRunning = false;
 
 // ─────────────────────────────────────────────────────────────
 // STORAGE
@@ -91,6 +92,55 @@ function refreshDirectBadge(urlStr) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// CONTENT TYPE HELPERS
+// ─────────────────────────────────────────────────────────────
+function getContentType(r) {
+  return (r?._headers?.['content-type'] || r?._headers?.['Content-Type'] || '').toLowerCase();
+}
+function isJsonResponse(r) {
+  const ct = getContentType(r);
+  return ct.includes('json') || /^\s*[\[{]/.test(r?._body || '');
+}
+function isHtmlResponse(r) {
+  if (!r) return false;
+  const ct = getContentType(r);
+  if (ct.includes('text/html') || ct.includes('application/xhtml')) return true;
+  const body = (r._body || '').trimStart().toLowerCase();
+  return body.startsWith('<!doctype') || body.startsWith('<html') ||
+         body.startsWith('<head') || body.startsWith('<body');
+}
+function isXmlResponse(r) {
+  const ct = getContentType(r);
+  return ct.includes('xml');
+}
+function isImageResponse(r) {
+  const ct = getContentType(r);
+  return ct.startsWith('image/');
+}
+function isBinaryResponse(r) {
+  const ct = getContentType(r);
+  const binaryTypes = [
+    'application/octet-stream','application/pdf','application/zip',
+    'application/gzip','application/x-tar','application/x-7z',
+    'application/x-rar','application/vnd.','application/msword',
+    'application/x-download','font/','audio/','video/'
+  ];
+  return binaryTypes.some(t => ct.startsWith(t)) || r?._isBinary === true;
+}
+function getResponseLabel(r) {
+  const ct = getContentType(r);
+  if (!ct) return '';
+  if (ct.includes('json'))       return 'JSON';
+  if (ct.includes('text/html'))  return 'HTML';
+  if (ct.includes('xml'))        return 'XML';
+  if (ct.includes('text/plain')) return 'TEXT';
+  if (ct.startsWith('image/'))   return 'IMAGE';
+  if (ct.includes('pdf'))        return 'PDF';
+  if (ct.includes('csv'))        return 'CSV';
+  return ct.split(';')[0].split('/')[1]?.toUpperCase() || 'BINARY';
+}
+
+// ─────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────
 function uid()  { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
@@ -114,10 +164,16 @@ function openModal(html) {
   });
 }
 function closeModal() { document.getElementById('modals').innerHTML = ''; }
-function dl(content, filename) {
+function dl(content, filename, type='application/json') {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content], { type:'application/json' }));
+  a.href = URL.createObjectURL(new Blob([content], { type }));
   a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+}
+function formatBytes(n) {
+  if (!n) return '0 B';
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n/1024).toFixed(1) + ' KB';
+  return (n/1048576).toFixed(1) + ' MB';
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -690,6 +746,63 @@ function checkMock(method,url){
 }
 
 // ─────────────────────────────────────────────────────────────
+// COLLECT FULL HISTORY ENTRY (captures all request details)
+// ─────────────────────────────────────────────────────────────
+function collectHistoryEntry(method, rawUrl, status, elapsed) {
+  const tab = getActiveTab();
+
+  // Params
+  const params = readKV('params').filter(r => r.k);
+  // Headers (non-empty keys)
+  const headers = readKV('headers').filter(r => r.k);
+  // Auth
+  const authType = document.getElementById('auth-sel')?.value || 'none';
+  const authData = readAuthData();
+  // Body
+  const bodyType = _bodyType;
+  let rawBody = '';
+  let urlEncoded = [];
+  let formFields = [];
+  let gqlQ = '', gqlV = '';
+
+  if (bodyType === 'raw')    rawBody     = document.getElementById('code-raw')?.value || '';
+  if (bodyType === 'urlenc') urlEncoded  = readKV('urlenc').filter(r => r.k);
+  if (bodyType === 'form')   formFields  = readFormData().map(r => ({ k: r.k, v: r.v, type: r.type }));
+  if (bodyType === 'graphql'){
+    gqlQ = document.getElementById('gql-q')?.value || '';
+    gqlV = document.getElementById('gql-v')?.value || '';
+  }
+
+  const rawFmt = document.getElementById('raw-fmt')?.value || 'json';
+
+  return {
+    id:       uid(),
+    method,
+    url:      rawUrl,
+    status,
+    time:     elapsed,
+    at:       new Date().toLocaleTimeString(),
+    pinned:   false,
+    // ── Full request snapshot ──
+    params,
+    headers,
+    authType,
+    authData,
+    bodyType,
+    rawBody,
+    rawFmt,
+    urlEncoded,
+    formFields,
+    gqlQ,
+    gqlV,
+    preScript:  document.getElementById('pre-script')?.value  || '',
+    testScript: document.getElementById('test-script')?.value || '',
+    pathVars:   readPathVars(),
+    name:       tab?.name || rawUrl.replace(/^https?:\/\//,'').slice(0,40) || 'Request',
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
 // SEND REQUEST
 // ─────────────────────────────────────────────────────────────
 function cancelReq(){
@@ -703,35 +816,74 @@ async function sendRequest(){
   saveTabUI();
   const tab=getActiveTab(),method=document.getElementById('method-sel').value,rawUrl=document.getElementById('url-in').value.trim();
   if(!rawUrl){notify('Enter a URL first','error');return;}
+
   const preCode=document.getElementById('pre-script').value;
   if(preCode.trim()){const pmObj=buildPM(null,tab?.collVars||{});runScript(preCode,pmObj);flushConsole();}
+
   let url=resolveVars(rawUrl);url=resolvePathInUrl(url);
   const paramRows=readKV('params').filter(r=>r.on&&r.k);
   const hdrRows=readKV('headers').filter(r=>r.on&&r.k);
   const{headers:authH,queryParams:authQP}=await computeAuth(method,url);
+
   let finalUrl=url;
   const qpAll={...Object.fromEntries(paramRows.map(r=>[resolveVars(r.k),resolveVars(r.v)])),...authQP};
   const qpStr=new URLSearchParams(qpAll).toString();
   if(qpStr)finalUrl+=(url.includes('?')?'&':'?')+qpStr;
+
   const headers={};hdrRows.forEach(h=>{headers[resolveVars(h.k)]=resolveVars(h.v);});Object.assign(headers,authH);
+
   const disableBody=document.getElementById('opt-nobody')?.checked;
   let body=null;
   if(!disableBody&&!['GET','HEAD'].includes(method)){
-    if(_bodyType==='raw'){body=resolveVars(document.getElementById('code-raw').value);if(!headers['Content-Type']&&!headers['content-type']){const ctMap={json:'application/json',xml:'application/xml',html:'text/html',text:'text/plain',javascript:'application/javascript'};headers['Content-Type']=ctMap[document.getElementById('raw-fmt').value]||'text/plain';}}
-    else if(_bodyType==='urlenc'){const rows=readKV('urlenc').filter(r=>r.on&&r.k);body=rows.map(r=>`${encodeURIComponent(resolveVars(r.k))}=${encodeURIComponent(resolveVars(r.v))}`).join('&');headers['Content-Type']='application/x-www-form-urlencoded';}
-    else if(_bodyType==='form'){const fd=new FormData();document.querySelectorAll('#kv-form tr').forEach(tr=>{const chk=tr.querySelector('.kv-chk'),key=tr.querySelectorAll('input[type=text]')[0]?.value,typ=tr.querySelector('.fv-type-sel')?.value||'text';if(!chk?.checked||!key)return;if(typ==='file'){const f=tr.querySelector('.fv-file input[type=file]')?.files?.[0];if(f)fd.append(key,f);}else fd.append(key,resolveVars(tr.querySelector('.fv-text input')?.value||''));});body=fd;}
-    else if(_bodyType==='graphql'){let vars={};try{vars=JSON.parse(resolveVars(document.getElementById('gql-v').value||'{}'));}catch{}body=JSON.stringify({query:resolveVars(document.getElementById('gql-q').value),variables:vars});if(!headers['Content-Type'])headers['Content-Type']='application/json';}
-    else if(_bodyType==='binary'){const f=document.getElementById('bin-file')?.files?.[0];if(f){body=f;if(!headers['Content-Type'])headers['Content-Type']=f.type||'application/octet-stream';}}
+    if(_bodyType==='raw'){
+      body=resolveVars(document.getElementById('code-raw').value);
+      if(!headers['Content-Type']&&!headers['content-type']){
+        const ctMap={json:'application/json',xml:'application/xml',html:'text/html',text:'text/plain',javascript:'application/javascript'};
+        headers['Content-Type']=ctMap[document.getElementById('raw-fmt').value]||'text/plain';
+      }
+    }
+    else if(_bodyType==='urlenc'){
+      const rows=readKV('urlenc').filter(r=>r.on&&r.k);
+      body=rows.map(r=>`${encodeURIComponent(resolveVars(r.k))}=${encodeURIComponent(resolveVars(r.v))}`).join('&');
+      headers['Content-Type']='application/x-www-form-urlencoded';
+    }
+    else if(_bodyType==='form'){
+      const fd=new FormData();
+      document.querySelectorAll('#kv-form tr').forEach(tr=>{
+        const chk=tr.querySelector('.kv-chk'),key=tr.querySelectorAll('input[type=text]')[0]?.value,typ=tr.querySelector('.fv-type-sel')?.value||'text';
+        if(!chk?.checked||!key)return;
+        if(typ==='file'){const f=tr.querySelector('.fv-file input[type=file]')?.files?.[0];if(f)fd.append(key,f);}
+        else fd.append(key,resolveVars(tr.querySelector('.fv-text input')?.value||''));
+      });
+      body=fd;
+    }
+    else if(_bodyType==='graphql'){
+      let vars={};try{vars=JSON.parse(resolveVars(document.getElementById('gql-v').value||'{}'));}catch{}
+      body=JSON.stringify({query:resolveVars(document.getElementById('gql-q').value),variables:vars});
+      if(!headers['Content-Type'])headers['Content-Type']='application/json';
+    }
+    else if(_bodyType==='binary'){
+      const f=document.getElementById('bin-file')?.files?.[0];
+      if(f){body=f;if(!headers['Content-Type'])headers['Content-Type']=f.type||'application/octet-stream';}
+    }
   }
+
   const mock=checkMock(method,finalUrl);
   if(mock){
     await sleep(mock.delay||0);
-    const fr={status:mock.statusCode||200,statusText:'OK (Mock)',_body:resolveVars(mock.body||'{}'),_headers:{'content-type':mock.contentType||'application/json',...Object.fromEntries((mock.headers||[]).filter(h=>h.k).map(h=>[h.k.toLowerCase(),h.v]))},_time:mock.delay||0,_size:new Blob([mock.body||'']).size,_mock:true};
+    const fr={status:mock.statusCode||200,statusText:'OK (Mock)',_body:resolveVars(mock.body||'{}'),
+      _headers:{'content-type':mock.contentType||'application/json',...Object.fromEntries((mock.headers||[]).filter(h=>h.k).map(h=>[h.k.toLowerCase(),h.v]))},
+      _time:mock.delay||0,_size:new Blob([mock.body||'']).size,_mock:true};
     if(tab)tab.response=fr;_lastResponse=fr;
-    const pmObj=buildPM(fr,tab?.collVars||{});const testCode=document.getElementById('test-script').value;
+    const pmObj=buildPM(fr,tab?.collVars||{});
+    const testCode=document.getElementById('test-script').value;
     if(testCode.trim())runScript(testCode,pmObj);
-    showResponse(fr);renderTests();flushConsole();notify('🎭 Mock '+fr.status,'info');return;
+    showResponse(fr);renderTests();flushConsole();notify('🎭 Mock '+fr.status,'info');
+    // Save to history with full body
+    addHistory(collectHistoryEntry(method,rawUrl,fr.status,fr._time));
+    return;
   }
+
   const isDirect=isPrivate(finalUrl);
   const fetchUrl=isDirect?finalUrl:(S.settings.corsEnabled?S.settings.proxyUrl+encodeURIComponent(finalUrl):finalUrl);
   const sendBtn=document.getElementById('send-btn'),cancelBtn=document.getElementById('cancel-btn');
@@ -740,35 +892,117 @@ async function sendRequest(){
   _abortCtrl=new AbortController();
   const tId=setTimeout(()=>_abortCtrl?.abort(),timeout);
   const t0=Date.now();
+
   try{
     const opts={method,headers,signal:_abortCtrl.signal};if(body)opts.body=body;
+
+    // Digest auth retry
     if(document.getElementById('auth-sel')?.value==='digest'){
       const r0=await fetch(fetchUrl,{...opts,headers:{...headers}}).catch(()=>null);
-      if(r0?.status===401){const wa=r0.headers.get('www-authenticate')||'';const realm=wa.match(/realm="([^"]+)"/i)?.[1]||document.getElementById('a-realm')?.value||'';const nonce=wa.match(/nonce="([^"]+)"/i)?.[1]||document.getElementById('a-nonce')?.value||'';const qop=wa.match(/qop="?([^",]+)/i)?.[1]?.trim()||'auth';const u2=document.getElementById('a-du')?.value||'',p2=document.getElementById('a-dp')?.value||'';if(realm&&nonce){const nc='00000001',cnonce=Math.random().toString(36).slice(2,10);let uri;try{uri=new URL(finalUrl).pathname;}catch{uri='/';}const ha1=md5(`${u2}:${realm}:${p2}`),ha2=md5(`${method}:${uri}`),res=md5(`${ha1}:${nonce}:${nc}:${cnonce}:${qop}:${ha2}`);headers['Authorization']=`Digest username="${u2}", realm="${realm}", nonce="${nonce}", uri="${uri}", nc=${nc}, cnonce="${cnonce}", qop=${qop}, response="${res}"`;opts.headers=headers;}}
+      if(r0?.status===401){
+        const wa=r0.headers.get('www-authenticate')||'';
+        const realm=wa.match(/realm="([^"]+)"/i)?.[1]||document.getElementById('a-realm')?.value||'';
+        const nonce=wa.match(/nonce="([^"]+)"/i)?.[1]||document.getElementById('a-nonce')?.value||'';
+        const qop=wa.match(/qop="?([^",]+)/i)?.[1]?.trim()||'auth';
+        const u2=document.getElementById('a-du')?.value||'',p2=document.getElementById('a-dp')?.value||'';
+        if(realm&&nonce){
+          const nc='00000001',cnonce=Math.random().toString(36).slice(2,10);
+          let uri;try{uri=new URL(finalUrl).pathname;}catch{uri='/';}
+          const ha1=md5(`${u2}:${realm}:${p2}`),ha2=md5(`${method}:${uri}`),res=md5(`${ha1}:${nonce}:${nc}:${cnonce}:${qop}:${ha2}`);
+          headers['Authorization']=`Digest username="${u2}", realm="${realm}", nonce="${nonce}", uri="${uri}", nc=${nc}, cnonce="${cnonce}", qop=${qop}, response="${res}"`;
+          opts.headers=headers;
+        }
+      }
     }
-    const resp=await fetch(fetchUrl,opts);clearTimeout(tId);
-    const elapsed=Date.now()-t0,respTxt=await resp.text(),respH={};
-    resp.headers.forEach((v,k)=>{respH[k]=v;});
-    const size=new Blob([respTxt]).size;
-    try{const domain=new URL(finalUrl).hostname,sc=resp.headers.get('set-cookie')||respH['set-cookie']||'';if(sc){if(!S.cookies[domain])S.cookies[domain]={};sc.split(/,(?=[^;]+=[^;]+)/).forEach(c=>{const[kv]=c.trim().split(';');const[ck,...cv]=kv.split('=');if(ck?.trim())S.cookies[domain][ck.trim()]=cv.join('=').trim();});save();}}catch{}
-    const ro={status:resp.status,statusText:resp.statusText,_body:respTxt,_headers:respH,_time:elapsed,_size:size};
-    if(tab)tab.response=ro;_lastResponse=ro;
-    _testResults=[];const testCode=document.getElementById('test-script').value;
+
+    // ── Fetch and handle binary/image/text responses ──────────
+    const resp = await fetch(fetchUrl, opts);
+    clearTimeout(tId);
+    const elapsed = Date.now() - t0;
+
+    const respH = {};
+    resp.headers.forEach((v, k) => { respH[k] = v; });
+    const ct = (respH['content-type'] || '').toLowerCase();
+
+    // Determine if binary/image
+    const isBin = ct.startsWith('image/') ||
+      ct.includes('application/octet-stream') ||
+      ct.includes('application/pdf') ||
+      ct.includes('application/zip') ||
+      ct.includes('audio/') ||
+      ct.includes('video/') ||
+      ct.includes('font/');
+
+    let respTxt = '';
+    let binaryDataUrl = null;
+    let arrayBuf = null;
+
+    if (isBin) {
+      // Read as ArrayBuffer → base64 data URL for display
+      arrayBuf = await resp.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuf);
+      // Build base64
+      let binary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < uint8.length; i += chunkSize) {
+        binary += String.fromCharCode(...uint8.subarray(i, i + chunkSize));
+      }
+      const b64 = btoa(binary);
+      binaryDataUrl = `data:${ct.split(';')[0]};base64,${b64}`;
+      respTxt = `[Binary data — ${formatBytes(arrayBuf.byteLength)}]`;
+    } else {
+      respTxt = await resp.text();
+    }
+
+    const size = arrayBuf ? arrayBuf.byteLength : new Blob([respTxt]).size;
+
+    // Cookie extraction
+    try{
+      const domain=new URL(finalUrl).hostname,sc=resp.headers.get('set-cookie')||respH['set-cookie']||'';
+      if(sc){if(!S.cookies[domain])S.cookies[domain]={};sc.split(/,(?=[^;]+=[^;]+)/).forEach(c=>{const[kv]=c.trim().split(';');const[ck,...cv]=kv.split('=');if(ck?.trim())S.cookies[domain][ck.trim()]=cv.join('=').trim();});save();}
+    }catch{}
+
+    const ro = {
+      status:     resp.status,
+      statusText: resp.statusText,
+      _body:      respTxt,
+      _headers:   respH,
+      _time:      elapsed,
+      _size:      size,
+      _isBinary:  isBin,
+      _dataUrl:   binaryDataUrl,   // data URL for image/binary preview
+      _arrayBuf:  arrayBuf,        // raw buffer for download
+    };
+
+    if(tab)tab.response=ro;
+    _lastResponse=ro;
+
+    _testResults=[];
+    const testCode=document.getElementById('test-script').value;
     if(testCode.trim()){const pmObj=buildPM(ro,tab?.collVars||{});runScript(testCode,pmObj);}
-    addHistory({method,url:rawUrl,status:resp.status,time:elapsed});
+
+    // ── Save full history entry ───────────────────────────────
+    addHistory(collectHistoryEntry(method, rawUrl, resp.status, elapsed));
+
     showResponse(ro);flushConsole();renderTests();
     notify(`${resp.status} ${resp.statusText} — ${elapsed}ms`,resp.status>=500?'error':resp.status>=400?'warn':'success');
+
   }catch(e){
     clearTimeout(tId);
     if(e.name==='AbortError'){notify('Request cancelled / timed out','info');}
     else{
-      const hint=isDirect?`${e.message}\n\n💡 Private/internal IP — ensure server is reachable from your browser network.`:S.settings.corsEnabled?e.message:`${e.message}\n\n💡 Enable ⚡ CORS Proxy to bypass browser CORS restrictions.`;
-      showErrorResp(hint,Date.now()-t0);notify('Request failed — '+e.message,'error');
+      const hint=isDirect
+        ?`${e.message}\n\n💡 Private/internal IP — ensure server is reachable from your browser network.`
+        :S.settings.corsEnabled?e.message:`${e.message}\n\n💡 Enable ⚡ CORS Proxy to bypass browser CORS restrictions.`;
+      showErrorResp(hint,Date.now()-t0);
+      notify('Request failed — '+e.message,'error');
     }
-  }finally{sendBtn.disabled=false;sendBtn.textContent='Send ➤';cancelBtn.style.display='none';_abortCtrl=null;}
+  }finally{
+    sendBtn.disabled=false;sendBtn.textContent='Send ➤';cancelBtn.style.display='none';_abortCtrl=null;
+  }
 }
 
-// Helper for advanced repeat / collection runner direct fetch
+// Helper for advanced repeat / collection runner
 async function fetchDirect(url, method, headers={}, body=null) {
   const isDirect=isPrivate(url);
   const fu=isDirect?url:(S.settings.corsEnabled?S.settings.proxyUrl+encodeURIComponent(url):url);
@@ -780,33 +1014,19 @@ async function fetchDirect(url, method, headers={}, body=null) {
   const hdrs={};resp.headers.forEach((v,k)=>{hdrs[k]=v;});
   return{status:resp.status,statusText:resp.statusText,_body:txt,_headers:hdrs,_time:Date.now()-t0,_size:new Blob([txt]).size};
 }
+/* ============================================================
+   POSTMANWEB v4 — app2.js  (Module 2 of 2)
+   Response Display · History · Collections · Environments ·
+   Globals · Code Gen · WebSocket · gRPC · Mock · Import ·
+   Settings · Workspaces · Theme · Resize · Init
+   ============================================================ */
+'use strict';
 
 // ─────────────────────────────────────────────────────────────
-// RESPONSE DISPLAY
+// IFRAME HELPERS
 // ─────────────────────────────────────────────────────────────
-function formatBytes(n){if(n<1024)return n+' B';if(n<1048576)return(n/1024).toFixed(1)+' KB';return(n/1048576).toFixed(1)+' MB';}
-
-function jsonHL(json){
-  let s=JSON.stringify(json,null,2);s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  return s.replace(/("(?:\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,m=>{
-    let c='jn';if(/^"/.test(m))c=/:$/.test(m)?'jk':'js';else if(/true|false/.test(m))c='jb';else if(/null/.test(m))c='jl';return`<span class="${c}">${m}</span>`;
-  });
-}
-
-// Detect if response is HTML (by content-type OR by content sniffing)
-function isHtmlResponse(r) {
-  if (!r) return false;
-  const ct = (r._headers?.['content-type'] || '').toLowerCase();
-  if (ct.includes('text/html') || ct.includes('application/xhtml')) return true;
-  // Sniff: if body starts with <!doctype or <html
-  const body = (r._body || '').trimStart().toLowerCase();
-  return body.startsWith('<!doctype') || body.startsWith('<html') || body.startsWith('<head') || body.startsWith('<body');
-}
-
-// Write HTML into iframe safely using blob URL (avoids srcdoc encoding issues)
 function writeIframe(iframe, html) {
   if (!iframe) return;
-  // Revoke old blob URL if any
   if (iframe._blobUrl) { URL.revokeObjectURL(iframe._blobUrl); iframe._blobUrl = null; }
   const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
   const blobUrl = URL.createObjectURL(blob);
@@ -814,99 +1034,257 @@ function writeIframe(iframe, html) {
   iframe.src = blobUrl;
 }
 
+// ─────────────────────────────────────────────────────────────
+// JSON HIGHLIGHT
+// ─────────────────────────────────────────────────────────────
+function jsonHL(json) {
+  let s = JSON.stringify(json, null, 2);
+  s = s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return s.replace(/("(?:\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
+    let c = 'jn';
+    if (/^"/.test(m)) c = /:$/.test(m) ? 'jk' : 'js';
+    else if (/true|false/.test(m)) c = 'jb';
+    else if (/null/.test(m)) c = 'jl';
+    return `<span class="${c}">${m}</span>`;
+  });
+}
+
+function xmlHL(xml) {
+  return esc(xml)
+    .replace(/(&lt;\/?)([\w:-]+)/g, '$1<span class="jk">$2</span>')
+    .replace(/([\w:-]+=)(&quot;[^&]*&quot;)/g, '<span class="jn">$1</span><span class="js">$2</span>');
+}
+
+// ─────────────────────────────────────────────────────────────
+// PRETTY BODY RENDERER
+// ─────────────────────────────────────────────────────────────
+function buildPrettyContent(r) {
+  if (!r) return '';
+  if (r._isBinary && r._dataUrl) {
+    const ct = getContentType(r);
+    if (ct.startsWith('image/')) {
+      return `<div style="padding:12px;text-align:center">
+        <img src="${r._dataUrl}" alt="Image response"
+          style="max-width:100%;max-height:60vh;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.3)">
+        <div style="margin-top:8px;font-size:11px;color:var(--text3)">${esc(ct)} — ${formatBytes(r._size)}</div>
+      </div>`;
+    }
+    return `<div style="padding:20px;color:var(--text3)">
+      <div style="font-size:32px;margin-bottom:8px">📦</div>
+      <div style="font-weight:600;margin-bottom:4px">Binary Response</div>
+      <div style="font-size:12px">Content-Type: <code>${esc(ct)}</code></div>
+      <div style="font-size:12px;margin-top:4px">Size: ${formatBytes(r._size)}</div>
+      <div style="margin-top:12px;font-size:12px;color:var(--accent)">Use the ⬇ Download button to save this file.</div>
+    </div>`;
+  }
+  if (isJsonResponse(r)) {
+    try { return jsonHL(JSON.parse(r._body)); } catch { return esc(r._body); }
+  }
+  if (isXmlResponse(r)) {
+    return xmlHL(r._body);
+  }
+  return esc(r._body);
+}
+
+// ─────────────────────────────────────────────────────────────
+// RESPONSE DISPLAY
+// ─────────────────────────────────────────────────────────────
 function showResponse(r) {
-  const pill=document.getElementById('r-pill'),rtime=document.getElementById('r-time'),
-        rsize=document.getElementById('r-size'),hint=document.getElementById('r-hint'),acts=document.getElementById('r-acts');
-  if(!r){
-    [pill,rtime,rsize,acts].forEach(el=>{if(el)el.style.display='none';});
-    if(hint)hint.style.display='';
-    document.getElementById('resp-pretty').innerHTML='';
-    document.getElementById('resp-raw').textContent='';
-    // Clear iframe
-    const iframe=document.getElementById('resp-preview');
-    if(iframe){if(iframe._blobUrl){URL.revokeObjectURL(iframe._blobUrl);iframe._blobUrl=null;}iframe.src='about:blank';}
+  const pill   = document.getElementById('r-pill');
+  const rtime  = document.getElementById('r-time');
+  const rsize  = document.getElementById('r-size');
+  const hint   = document.getElementById('r-hint');
+  const acts   = document.getElementById('r-acts');
+  const dlBtn  = document.getElementById('r-download-btn');
+  const ctBadge= document.getElementById('resp-ct-badge');
+
+  if (!r) {
+    [pill,rtime,rsize,acts].forEach(el => { if(el) el.style.display='none'; });
+    if (hint)    hint.style.display = '';
+    if (ctBadge) ctBadge.style.display = 'none';
+    if (dlBtn)   dlBtn.style.display = 'none';
+    document.getElementById('resp-pretty').innerHTML = '';
+    document.getElementById('resp-raw').textContent  = '';
+    const iframe = document.getElementById('resp-preview');
+    if (iframe) {
+      if (iframe._blobUrl) { URL.revokeObjectURL(iframe._blobUrl); iframe._blobUrl = null; }
+      iframe.src = 'about:blank';
+    }
     return;
   }
 
-  pill.style.display='';
-  pill.textContent=`${r.status} ${r.statusText}`;
-  pill.className=`spill ${r._mock?'smock':'s'+Math.floor(r.status/100)}`;
+  // Status pill
+  pill.style.display = '';
+  pill.textContent   = `${r.status} ${r.statusText}`;
+  pill.className     = `spill ${r._mock ? 'smock' : 's' + Math.floor(r.status / 100)}`;
 
-  rtime.style.display='';
-  rtime.innerHTML=`Time: <b${r._time>2000?' class="slow"':''}'>${r._time}ms</b>`;
+  // Time
+  rtime.style.display = '';
+  rtime.innerHTML = `Time: <b${r._time > 2000 ? ' class="slow"' : ''}>${r._time}ms</b>`;
 
-  rsize.style.display='';rsize.innerHTML=`Size: <b>${formatBytes(r._size)}</b>`;
-  hint.style.display='none';acts.style.display='';
+  // Size
+  rsize.style.display = '';
+  rsize.innerHTML = `Size: <b>${formatBytes(r._size)}</b>`;
 
-  // ── Pretty body ─────────────────────────────────────────
-  const ct=(r._headers?.['content-type']||'').toLowerCase();
-  let pretty='';
-  if(ct.includes('json')||/^\s*[\[{]/.test(r._body)){
-    try{pretty=jsonHL(JSON.parse(r._body));}catch{pretty=esc(r._body);}
-  } else {
-    pretty=esc(r._body);
+  hint.style.display = 'none';
+  acts.style.display = '';
+
+  // Content-type badge
+  const label = getResponseLabel(r);
+  if (label && ctBadge) {
+    ctBadge.textContent = label;
+    ctBadge.style.display = '';
+  } else if (ctBadge) {
+    ctBadge.style.display = 'none';
   }
-  document.getElementById('resp-pretty').innerHTML=pretty;
-  document.getElementById('resp-raw').textContent=r._body;
 
-  // ── Preview: use blob URL for proper HTML rendering ──────
-  const iframe=document.getElementById('resp-preview');
-  if(isHtmlResponse(r)){
+  // Download button — show for binary/image
+  if (dlBtn) {
+    dlBtn.style.display = (r._isBinary && r._dataUrl) ? '' : 'none';
+  }
+
+  // ── Pretty panel ─────────────────────────────────────────
+  document.getElementById('resp-pretty').innerHTML = buildPrettyContent(r);
+
+  // ── Raw panel ────────────────────────────────────────────
+  document.getElementById('resp-raw').textContent = r._body || '';
+
+  // ── Preview panel ────────────────────────────────────────
+  const iframe = document.getElementById('resp-preview');
+  if (r._isBinary && r._dataUrl) {
+    const ct = getContentType(r);
+    if (ct.startsWith('image/')) {
+      writeIframe(iframe,
+        `<html><body style="margin:0;background:#1a1a2e;display:flex;align-items:center;justify-content:center;min-height:100vh">
+          <img src="${r._dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain">
+        </body></html>`);
+    } else {
+      writeIframe(iframe,
+        `<html><body style="font-family:sans-serif;padding:30px;color:#888;background:#111;text-align:center">
+          <div style="font-size:48px">📦</div>
+          <p>Binary file — use ⬇ Download to save.</p>
+          <p style="font-size:12px">Type: <code>${esc(ct)}</code> &nbsp; Size: ${formatBytes(r._size)}</p>
+        </body></html>`);
+    }
+  } else if (isHtmlResponse(r)) {
     writeIframe(iframe, r._body);
   } else {
-    // For non-HTML, show a helpful message in the preview
-    if(iframe._blobUrl){URL.revokeObjectURL(iframe._blobUrl);iframe._blobUrl=null;}
-    const previewHtml=`<html><body style="font-family:sans-serif;padding:20px;color:#666;background:#f9f9f9">
-      <p style="font-size:14px">Preview is only available for HTML responses.</p>
-      <p style="font-size:12px;margin-top:8px">Content-Type: <code>${esc(ct||'unknown')}</code></p>
-      <p style="font-size:12px">Use the <strong>Pretty</strong> or <strong>Raw</strong> tab to view this response.</p>
-    </body></html>`;
-    writeIframe(iframe, previewHtml);
+    writeIframe(iframe,
+      `<html><body style="font-family:sans-serif;padding:20px;color:#666;background:#f9f9f9">
+        <p style="font-size:14px">Preview available for HTML responses only.</p>
+        <p style="font-size:12px;margin-top:8px">Content-Type: <code>${esc(getContentType(r) || 'unknown')}</code></p>
+        <p style="font-size:12px">Use <strong>Pretty</strong> or <strong>Raw</strong> tab to view.</p>
+      </body></html>`);
   }
 
   // ── Headers table ────────────────────────────────────────
-  document.getElementById('r-headers-tbl').innerHTML=
-    Object.entries(r._headers||{}).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')||
+  document.getElementById('r-headers-tbl').innerHTML =
+    Object.entries(r._headers || {})
+      .map(([k,v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('') ||
     `<tr><td colspan="2" style="color:var(--text3);padding:10px">No headers</td></tr>`;
 
   renderCookiesPanel();
 }
 
-function showErrorResp(msg,time){
-  const pill=document.getElementById('r-pill');pill.style.display='';pill.className='spill serr';pill.textContent='Error';
-  document.getElementById('r-time').style.display='';document.getElementById('r-time').innerHTML=`Time: <b class="e">${time}ms</b>`;
-  document.getElementById('r-size').style.display='none';document.getElementById('r-hint').style.display='none';document.getElementById('r-acts').style.display='none';
-  document.getElementById('resp-pretty').innerHTML=`<span style="color:var(--err);white-space:pre-wrap">${esc(msg)}</span>`;
-  document.getElementById('resp-raw').textContent=msg;
+function showErrorResp(msg, time) {
+  const pill = document.getElementById('r-pill');
+  pill.style.display = ''; pill.className = 'spill serr'; pill.textContent = 'Error';
+  document.getElementById('r-time').style.display = '';
+  document.getElementById('r-time').innerHTML = `Time: <b class="e">${time}ms</b>`;
+  document.getElementById('r-size').style.display   = 'none';
+  document.getElementById('r-hint').style.display   = 'none';
+  document.getElementById('r-acts').style.display   = 'none';
+  document.getElementById('resp-pretty').innerHTML  =
+    `<span style="color:var(--err);white-space:pre-wrap">${esc(msg)}</span>`;
+  document.getElementById('resp-raw').textContent = msg;
 }
 
-function renderTests(){
-  const c=document.getElementById('test-output'),badge=document.getElementById('test-badge');
-  if(!_testResults.length){c.innerHTML='<div class="empty-state"><div class="ei">🧪</div><p>No tests ran.</p></div>';badge.style.display='none';return;}
-  const pass=_testResults.filter(t=>t.pass).length;
-  badge.textContent=`${pass}/${_testResults.length}`;badge.style.display='';
-  badge.style.background=pass===_testResults.length?'var(--ok)':pass===0?'var(--err)':'var(--warn)';badge.style.color='#000';
-  c.innerHTML=`<div class="test-summary"><span style="font-size:20px">${pass===_testResults.length?'✅':pass===0?'❌':'⚠️'}</span><span style="font-weight:700">${pass} / ${_testResults.length} passed</span><span style="color:var(--text3);font-size:11px">${_testResults.length-pass} failed</span></div>`+
-    _testResults.map(t=>`<div class="tr-item ${t.pass?'tr-pass':'tr-fail'}"><span class="tr-icon">${t.pass?'✅':'❌'}</span><div><div class="tr-name">${esc(t.name)}</div>${t.error?`<div class="tr-err">${esc(t.error)}</div>`:''}</div></div>`).join('');
+// ─────────────────────────────────────────────────────────────
+// DOWNLOAD BINARY
+// ─────────────────────────────────────────────────────────────
+function downloadBinaryResp() {
+  if (!_lastResponse?._dataUrl) return;
+  const ct  = getContentType(_lastResponse);
+  const ext = ct.split('/')[1]?.split(';')[0] || 'bin';
+  const a   = document.createElement('a');
+  a.href     = _lastResponse._dataUrl;
+  a.download = `response.${ext}`;
+  a.click();
 }
 
-function flushConsole(){document.getElementById('console-out').innerHTML=_consoleLogs.map(l=>`<div class="con-row ${l.type}"><span class="ct">${l.type}</span><span class="cm">${esc(l.msg)}</span></div>`).join('');}
-function clearConsole(){_consoleLogs=[];flushConsole();}
-
-function renderCookiesPanel(){
-  const p=document.getElementById('cookies-out'),domains=Object.keys(S.cookies);
-  if(!domains.length){p.innerHTML='<div class="empty-state"><div class="ei">🍪</div><p>No cookies stored.</p></div>';return;}
-  p.innerHTML=domains.map(d=>`<div class="ck-domain"><div class="ck-domain-nm">${esc(d)}</div>${Object.entries(S.cookies[d]).map(([k,v])=>`<div class="ck-row"><span class="ck-name">${esc(k)}</span><span class="ck-val" title="${esc(v)}">${esc(v)}</span></div>`).join('')}</div>`).join('');
+// ─────────────────────────────────────────────────────────────
+// COPY / SAVE RESPONSE
+// ─────────────────────────────────────────────────────────────
+function copyResponse() {
+  const text = document.getElementById('resp-raw').textContent;
+  navigator.clipboard.writeText(text).then(() => notify('Copied!','success'));
+}
+function saveRespFile() {
+  if (_lastResponse?._isBinary && _lastResponse._dataUrl) {
+    downloadBinaryResp(); return;
+  }
+  const content = document.getElementById('resp-raw').textContent;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type:'text/plain' }));
+  a.download = 'response.txt'; a.click();
 }
 
-function copyResponse(){navigator.clipboard.writeText(document.getElementById('resp-raw').textContent).then(()=>notify('Copied!','success'));}
-function saveRespFile(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([document.getElementById('resp-raw').textContent],{type:'text/plain'}));a.download='response.txt';a.click();}
+// ─────────────────────────────────────────────────────────────
+// TEST RESULTS
+// ─────────────────────────────────────────────────────────────
+function renderTests() {
+  const c = document.getElementById('test-output'), badge = document.getElementById('test-badge');
+  if (!_testResults.length) {
+    c.innerHTML = '<div class="empty-state"><div class="ei">🧪</div><p>No tests ran.</p></div>';
+    badge.style.display = 'none'; return;
+  }
+  const pass = _testResults.filter(t => t.pass).length;
+  badge.textContent = `${pass}/${_testResults.length}`; badge.style.display = '';
+  badge.style.background = pass === _testResults.length ? 'var(--ok)' : pass === 0 ? 'var(--err)' : 'var(--warn)';
+  badge.style.color = '#000';
+  c.innerHTML =
+    `<div class="test-summary">
+       <span style="font-size:20px">${pass===_testResults.length?'✅':pass===0?'❌':'⚠️'}</span>
+       <span style="font-weight:700">${pass} / ${_testResults.length} passed</span>
+       <span style="color:var(--text3);font-size:11px">${_testResults.length-pass} failed</span>
+     </div>` +
+    _testResults.map(t =>
+      `<div class="tr-item ${t.pass?'tr-pass':'tr-fail'}">
+         <span class="tr-icon">${t.pass?'✅':'❌'}</span>
+         <div>
+           <div class="tr-name">${esc(t.name)}</div>
+           ${t.error ? `<div class="tr-err">${esc(t.error)}</div>` : ''}
+         </div>
+       </div>`).join('');
+}
+
+function flushConsole() {
+  document.getElementById('console-out').innerHTML =
+    _consoleLogs.map(l =>
+      `<div class="con-row ${l.type}"><span class="ct">${l.type}</span><span class="cm">${esc(l.msg)}</span></div>`
+    ).join('');
+}
+function clearConsole() { _consoleLogs = []; flushConsole(); }
+
+function renderCookiesPanel() {
+  const p = document.getElementById('cookies-out'), domains = Object.keys(S.cookies);
+  if (!domains.length) {
+    p.innerHTML = '<div class="empty-state"><div class="ei">🍪</div><p>No cookies stored.</p></div>'; return;
+  }
+  p.innerHTML = domains.map(d =>
+    `<div class="ck-domain">
+       <div class="ck-domain-nm">${esc(d)}</div>
+       ${Object.entries(S.cookies[d]).map(([k,v]) =>
+         `<div class="ck-row"><span class="ck-name">${esc(k)}</span><span class="ck-val" title="${esc(v)}">${esc(v)}</span></div>`
+       ).join('')}
+     </div>`).join('');
+}
 
 // ─────────────────────────────────────────────────────────────
 // ENLARGE / FULLSCREEN OVERLAY
 // ─────────────────────────────────────────────────────────────
-let _fsCurrentView = 'pretty';   // tracks which sub-tab is active in fullscreen body view
-let _fsPanel       = 'body';     // which panel is enlarged
+let _fsCurrentView = 'pretty';
+let _fsPanel       = 'body';
 
 function openEnlargeResp() {
   _fsPanel = 'body';
@@ -921,7 +1299,6 @@ function openEnlargeResp() {
   copyBtn.style.display = '';
   saveBtn.style.display = '';
 
-  // Build sub-tabs
   toolbar.innerHTML =
     `<button class="fs-tab${_fsCurrentView==='pretty'?' active':''}" onclick="fsSwitchView('pretty')">Pretty</button>
      <button class="fs-tab${_fsCurrentView==='raw'?' active':''}"    onclick="fsSwitchView('raw')">Raw</button>
@@ -929,12 +1306,12 @@ function openEnlargeResp() {
 
   fsBuildBodyContent(_fsCurrentView, fsBody);
   overlay.style.display = 'flex';
-  overlay.focus && overlay.focus();
 }
 
 function fsSwitchView(view) {
   _fsCurrentView = view;
-  document.querySelectorAll('.fs-tab').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === view));
+  document.querySelectorAll('.fs-tab').forEach(b =>
+    b.classList.toggle('active', b.textContent.toLowerCase() === view));
   fsBuildBodyContent(view, document.getElementById('fs-body'));
 }
 
@@ -945,17 +1322,11 @@ function fsBuildBodyContent(view, container) {
 
   if (view === 'pretty') {
     const pre = document.createElement('pre');
-    const ct = (r._headers?.['content-type'] || '').toLowerCase();
-    if (ct.includes('json') || /^\s*[\[{]/.test(r._body)) {
-      try { pre.innerHTML = jsonHL(JSON.parse(r._body)); }
-      catch { pre.textContent = r._body; }
-    } else {
-      pre.textContent = r._body;
-    }
+    pre.innerHTML = buildPrettyContent(r);
     container.appendChild(pre);
   } else if (view === 'raw') {
     const pre = document.createElement('pre');
-    pre.textContent = r._body;
+    pre.textContent = r._body || '';
     container.appendChild(pre);
   } else if (view === 'preview') {
     const iframe = document.createElement('iframe');
@@ -963,8 +1334,17 @@ function fsBuildBodyContent(view, container) {
     iframe.referrerPolicy = 'no-referrer';
     iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;background:#fff;';
     container.appendChild(iframe);
-    writeIframe(iframe, isHtmlResponse(r) ? r._body :
-      `<html><body style="font-family:sans-serif;padding:20px;color:#666">Preview only available for HTML responses.</body></html>`);
+    if (r._isBinary && r._dataUrl) {
+      const ct = getContentType(r);
+      if (ct.startsWith('image/')) {
+        writeIframe(iframe, `<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${r._dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain"></body></html>`);
+      } else {
+        writeIframe(iframe, `<html><body style="font-family:sans-serif;padding:30px;color:#888;text-align:center"><p>Binary — use ⬇ Download.</p></body></html>`);
+      }
+    } else {
+      writeIframe(iframe, isHtmlResponse(r) ? r._body :
+        `<html><body style="font-family:sans-serif;padding:20px;color:#666">Preview only available for HTML responses.</body></html>`);
+    }
   }
 }
 
@@ -976,56 +1356,46 @@ function openEnlargePanel(panel) {
   const fsBody  = document.getElementById('fs-body');
   const copyBtn = document.getElementById('fs-copy-btn');
   const saveBtn = document.getElementById('fs-save-btn');
-
   toolbar.innerHTML = '';
 
   if (panel === 'headers') {
     title.textContent = 'Response Headers';
-    copyBtn.style.display = '';
-    saveBtn.style.display = '';
+    copyBtn.style.display = ''; saveBtn.style.display = '';
     const r = _lastResponse;
     const table = document.createElement('table');
+    table.className = 'rh-tbl';
     table.innerHTML = Object.entries(r?._headers || {})
       .map(([k,v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('') ||
       '<tr><td colspan="2" style="color:var(--text3);padding:14px">No headers</td></tr>';
-    fsBody.innerHTML = '';
-    fsBody.appendChild(table);
+    fsBody.innerHTML = ''; fsBody.appendChild(table);
 
   } else if (panel === 'cookies') {
     title.textContent = 'Cookies';
-    copyBtn.style.display = 'none';
-    saveBtn.style.display = 'none';
+    copyBtn.style.display = 'none'; saveBtn.style.display = 'none';
     const clone = document.getElementById('cookies-out').cloneNode(true);
     clone.style.padding = '14px';
-    fsBody.innerHTML = '';
-    fsBody.appendChild(clone);
+    fsBody.innerHTML = ''; fsBody.appendChild(clone);
 
   } else if (panel === 'tests') {
     title.textContent = 'Test Results';
-    copyBtn.style.display = 'none';
-    saveBtn.style.display = 'none';
+    copyBtn.style.display = 'none'; saveBtn.style.display = 'none';
     const clone = document.getElementById('test-output').cloneNode(true);
     clone.style.padding = '14px';
-    fsBody.innerHTML = '';
-    fsBody.appendChild(clone);
+    fsBody.innerHTML = ''; fsBody.appendChild(clone);
 
   } else if (panel === 'console') {
     title.textContent = 'Console';
-    copyBtn.style.display = 'none';
-    saveBtn.style.display = 'none';
+    copyBtn.style.display = 'none'; saveBtn.style.display = 'none';
     const clone = document.getElementById('console-out').cloneNode(true);
     clone.style.padding = '0';
-    fsBody.innerHTML = '';
-    fsBody.appendChild(clone);
+    fsBody.innerHTML = ''; fsBody.appendChild(clone);
   }
 
   overlay.style.display = 'flex';
 }
 
 function closeEnlarge() {
-  const overlay = document.getElementById('fs-overlay');
-  overlay.style.display = 'none';
-  // Clean up any blob URLs inside fs-body
+  document.getElementById('fs-overlay').style.display = 'none';
   document.querySelectorAll('#fs-body iframe').forEach(iframe => {
     if (iframe._blobUrl) { URL.revokeObjectURL(iframe._blobUrl); iframe._blobUrl = null; }
     iframe.src = 'about:blank';
@@ -1036,10 +1406,11 @@ function closeEnlarge() {
 function fsAction(action) {
   if (action === 'copy') {
     let text = '';
-    if (_fsPanel === 'body') text = _lastResponse?._body || '';
+    if (_fsPanel === 'body')    text = _lastResponse?._body || '';
     else if (_fsPanel === 'headers') text = Object.entries(_lastResponse?._headers||{}).map(([k,v])=>`${k}: ${v}`).join('\n');
     navigator.clipboard.writeText(text).then(() => notify('Copied!','success'));
   } else if (action === 'save') {
+    if (_lastResponse?._isBinary && _lastResponse._dataUrl) { downloadBinaryResp(); return; }
     const content = _lastResponse?._body || '';
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([content],{type:'text/plain'}));
@@ -1050,81 +1421,162 @@ function fsAction(action) {
 // ─────────────────────────────────────────────────────────────
 // PANEL SWITCHING
 // ─────────────────────────────────────────────────────────────
-function switchReqPanel(id){document.querySelectorAll('#req-ptabs .ptab').forEach(t=>t.classList.toggle('active',t.dataset.panel===id));document.querySelectorAll('.tpanel').forEach(p=>p.classList.toggle('active',p.id==='rp-'+id));}
-function switchRespPanel(id){document.querySelectorAll('.rptab').forEach(t=>t.classList.toggle('active',t.dataset.panel===id));document.querySelectorAll('.rtpanel').forEach(p=>p.classList.toggle('active',p.id==='rsp-'+id));}
-function switchRespBody(id){
-  document.querySelectorAll('.rbview').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
-  document.querySelectorAll('.rbpanel').forEach(p=>p.classList.toggle('active',p.id==='rbp-'+id));
-  // If switching to preview and we have a response, ensure iframe is loaded
-  if (id==='preview' && _lastResponse) {
+function switchReqPanel(id) {
+  document.querySelectorAll('#req-ptabs .ptab').forEach(t => t.classList.toggle('active', t.dataset.panel === id));
+  document.querySelectorAll('.tpanel').forEach(p => p.classList.toggle('active', p.id === 'rp-' + id));
+}
+function switchRespPanel(id) {
+  document.querySelectorAll('.rptab').forEach(t => t.classList.toggle('active', t.dataset.panel === id));
+  document.querySelectorAll('.rtpanel').forEach(p => p.classList.toggle('active', p.id === 'rsp-' + id));
+}
+function switchRespBody(id) {
+  document.querySelectorAll('.rbview').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+  document.querySelectorAll('.rbpanel').forEach(p => p.classList.toggle('active', p.id === 'rbp-' + id));
+  if (id === 'preview' && _lastResponse) {
     const iframe = document.getElementById('resp-preview');
     if (!iframe.src || iframe.src === 'about:blank' || !iframe._blobUrl) {
-      writeIframe(iframe, isHtmlResponse(_lastResponse) ? _lastResponse._body :
-        `<html><body style="font-family:sans-serif;padding:20px;color:#666;background:#f9f9f9"><p>Preview only available for HTML responses.</p></body></html>`);
+      if (_lastResponse._isBinary && _lastResponse._dataUrl) {
+        const ct = getContentType(_lastResponse);
+        if (ct.startsWith('image/')) {
+          writeIframe(iframe, `<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${_lastResponse._dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain"></body></html>`);
+        }
+      } else if (isHtmlResponse(_lastResponse)) {
+        writeIframe(iframe, _lastResponse._body);
+      }
     }
   }
 }
-function switchSB(id){document.querySelectorAll('.sb-tab').forEach(t=>t.classList.toggle('active',t.dataset.sb===id));document.querySelectorAll('.sb-panel').forEach(p=>p.classList.toggle('active',p.id==='sbp-'+id));}
-function toggleSB(){document.getElementById('sidebar').classList.toggle('hidden');}
+function switchSB(id) {
+  document.querySelectorAll('.sb-tab').forEach(t => t.classList.toggle('active', t.dataset.sb === id));
+  document.querySelectorAll('.sb-panel').forEach(p => p.classList.toggle('active', p.id === 'sbp-' + id));
+}
+function toggleSB() { document.getElementById('sidebar').classList.toggle('hidden'); }
 
 // ─────────────────────────────────────────────────────────────
-// HISTORY  — pin/unpin/del/adv all delegated
+// HISTORY  — stores full request body, replays on click
 // ─────────────────────────────────────────────────────────────
-function toggleHistRec(){S.settings.historyOn=document.getElementById('hist-toggle').checked;save();refreshHistDot();notify(S.settings.historyOn?'History ON':'History OFF','info');}
-function refreshHistDot(){const d=document.getElementById('hist-dot'),t=document.getElementById('hist-toggle');if(d)d.className='hrec-dot'+(S.settings.historyOn===false?' off':'');if(t)t.checked=S.settings.historyOn!==false;}
-
-function addHistory(entry){
-  if(S.settings.historyOn===false)return;
-  S.history.unshift({id:uid(),...entry,at:new Date().toLocaleTimeString(),pinned:false});
-  if(S.history.length>500)S.history.pop();
-  save();renderHistory();
+function toggleHistRec() {
+  S.settings.historyOn = document.getElementById('hist-toggle').checked;
+  save(); refreshHistDot();
+  notify(S.settings.historyOn ? 'History ON' : 'History OFF', 'info');
+}
+function refreshHistDot() {
+  const d = document.getElementById('hist-dot'), t = document.getElementById('hist-toggle');
+  if (d) d.className = 'hrec-dot' + (S.settings.historyOn === false ? ' off' : '');
+  if (t) t.checked = S.settings.historyOn !== false;
 }
 
-function renderHistory(){
-  const list=document.getElementById('hist-list');
+function addHistory(entry) {
+  if (S.settings.historyOn === false) return;
+  S.history.unshift(entry);
+  if (S.history.length > 500) S.history.pop();
+  save(); renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('hist-list');
   refreshHistDot();
-  if(!S.history.length){list.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>No history yet.</p></div>';return;}
-  const pinned=S.history.filter(h=>h.pinned===true);
-  const recent=S.history.filter(h=>h.pinned!==true);
-  const row=h=>{
-    const p=h.pinned===true;
+  if (!S.history.length) {
+    list.innerHTML = '<div class="empty-state"><div class="ei">📭</div><p>No history yet.</p></div>'; return;
+  }
+  const pinned = S.history.filter(h => h.pinned === true);
+  const recent  = S.history.filter(h => h.pinned !== true);
+
+  const row = h => {
+    const p = h.pinned === true;
+    // Build a compact body preview for the tooltip
+    let bodyPreview = '';
+    if (h.bodyType === 'raw' && h.rawBody)       bodyPreview = h.rawBody.slice(0, 60);
+    else if (h.bodyType === 'urlenc' && h.urlEncoded?.length) bodyPreview = h.urlEncoded.map(r=>`${r.k}=${r.v}`).join('&').slice(0,60);
+    else if (h.bodyType === 'form' && h.formFields?.length)   bodyPreview = h.formFields.map(r=>r.k).join(', ').slice(0,60);
+    else if (h.bodyType === 'graphql' && h.gqlQ)  bodyPreview = h.gqlQ.slice(0, 60);
+
+    const statusClass = h.status >= 500 ? 'serr' : h.status >= 400 ? 'swarn' : h.status >= 200 ? 'sok' : '';
+
     return `<div class="hist-row${p?' pinned':''}" data-hid="${h.id}">
       <span class="mbadge ${h.method}" style="color:${MC[h.method]||'var(--text2)'}">${h.method}</span>
-      <span class="hist-url" title="${esc(h.url)}">${esc(h.url)}</span>
+      <div class="hist-main">
+        <span class="hist-url" title="${esc(h.url)}">${esc(h.url)}</span>
+        ${bodyPreview ? `<span class="hist-body-preview" title="${esc(bodyPreview)}">${esc(bodyPreview.length >= 60 ? bodyPreview+'…' : bodyPreview)}</span>` : ''}
+      </div>
+      <span class="hist-status ${statusClass}">${h.status||''}</span>
       <span class="hist-time">${h.at||''}</span>
       <div class="hist-acts">
         <button class="hist-adv-btn" data-action="adv" data-hid="${h.id}" title="Advanced: repeat this request N times">Adv</button>
-        <button class="hist-pin-btn" data-action="pin" data-hid="${h.id}" data-pinned="${p?1:0}" title="${p?'Unpin':'Pin'}">${p?'📌':'📍'}</button>
+        <button class="hist-pin-btn" data-action="pin" data-hid="${h.id}" title="${p?'Unpin':'Pin'}">${p?'📌':'📍'}</button>
         <button class="hist-del-btn" data-action="del" data-hid="${h.id}" title="Delete">🗑</button>
       </div>
     </div>`;
   };
-  let html='';
-  if(pinned.length)html+=`<div class="hist-sec">📌 PINNED</div>`+pinned.map(row).join('');
-  if(recent.length){if(pinned.length)html+=`<div class="hist-sec">🕐 RECENT</div>`;html+=recent.map(row).join('');}
-  list.innerHTML=html;
+
+  let html = '';
+  if (pinned.length) html += `<div class="hist-sec">📌 PINNED</div>` + pinned.map(row).join('');
+  if (recent.length) { if(pinned.length) html += `<div class="hist-sec">🕐 RECENT</div>`; html += recent.map(row).join(''); }
+  list.innerHTML = html;
 }
 
-function initHistoryEvents(){
-  const list=document.getElementById('hist-list');
-  list.addEventListener('click',function(e){
-    const advBtn=e.target.closest('[data-action="adv"]');
-    if(advBtn){e.stopPropagation();e.preventDefault();const id=advBtn.dataset.hid;const h=S.history.find(x=>x.id===id);if(h)openAdvPopover(h,advBtn);return;}
-    const pinBtn=e.target.closest('[data-action="pin"]');
-    if(pinBtn){e.stopPropagation();e.preventDefault();const id=pinBtn.dataset.hid;const h=S.history.find(x=>x.id===id);if(!h)return;h.pinned=!h.pinned;S.history.sort((a,b)=>(b.pinned===true?1:0)-(a.pinned===true?1:0));save();renderHistory();notify(h.pinned?'📌 Pinned':'Unpinned','info');return;}
-    const delBtn=e.target.closest('[data-action="del"]');
-    if(delBtn){e.stopPropagation();e.preventDefault();const id=delBtn.dataset.hid;S.history=S.history.filter(x=>x.id!==id);save();renderHistory();return;}
-    const row=e.target.closest('.hist-row');
-    if(row){const id=row.dataset.hid;const h=S.history.find(x=>x.id===id);if(h)newTab({method:h.method,url:h.url,name:h.url.replace(/^https?:\/\//,'').slice(0,40)||'Request'});}
+function initHistoryEvents() {
+  const list = document.getElementById('hist-list');
+  list.addEventListener('click', function(e) {
+    const advBtn = e.target.closest('[data-action="adv"]');
+    if (advBtn) { e.stopPropagation(); e.preventDefault(); const h=S.history.find(x=>x.id===advBtn.dataset.hid); if(h)openAdvPopover(h,advBtn); return; }
+
+    const pinBtn = e.target.closest('[data-action="pin"]');
+    if (pinBtn) {
+      e.stopPropagation(); e.preventDefault();
+      const h = S.history.find(x => x.id === pinBtn.dataset.hid); if(!h)return;
+      h.pinned = !h.pinned;
+      S.history.sort((a,b) => (b.pinned===true?1:0)-(a.pinned===true?1:0));
+      save(); renderHistory(); notify(h.pinned?'📌 Pinned':'Unpinned','info'); return;
+    }
+
+    const delBtn = e.target.closest('[data-action="del"]');
+    if (delBtn) {
+      e.stopPropagation(); e.preventDefault();
+      S.history = S.history.filter(x => x.id !== delBtn.dataset.hid);
+      save(); renderHistory(); return;
+    }
+
+    const row = e.target.closest('.hist-row');
+    if (row) {
+      const h = S.history.find(x => x.id === row.dataset.hid);
+      if (h) replayHistoryEntry(h);
+    }
   });
 }
 
-function clearHistory(){if(!confirm('Delete ALL history including pinned?'))return;S.history=[];save();renderHistory();notify('History cleared','info');}
-function unpinAllHistory(){
-  const n=S.history.filter(h=>h.pinned===true).length;
-  if(!n){notify('Nothing is pinned','info');return;}
-  S.history.forEach(h=>{h.pinned=false;});
-  save();renderHistory();notify(`Unpinned ${n} item${n!==1?'s':''}  ✓`,'success');
+// Replay a history entry — restores full request including body
+function replayHistoryEntry(h) {
+  newTab({
+    method:     h.method     || 'GET',
+    url:        h.url        || '',
+    name:       h.name       || h.url?.replace(/^https?:\/\//,'').slice(0,40) || 'Request',
+    params:     h.params     || [],
+    headers:    h.headers    || [],
+    pathVars:   h.pathVars   || [],
+    authType:   h.authType   || 'none',
+    authData:   h.authData   || {},
+    bodyType:   h.bodyType   || 'none',
+    rawBody:    h.rawBody    || '',
+    rawFmt:     h.rawFmt     || 'json',
+    urlEncoded: h.urlEncoded || [],
+    formData:   h.formFields || [],
+    gqlQ:       h.gqlQ       || '',
+    gqlV:       h.gqlV       || '',
+    preScript:  h.preScript  || '',
+    testScript: h.testScript || '',
+  });
+}
+
+function clearHistory() {
+  if (!confirm('Delete ALL history including pinned?')) return;
+  S.history = []; save(); renderHistory(); notify('History cleared','info');
+}
+function unpinAllHistory() {
+  const n = S.history.filter(h => h.pinned === true).length;
+  if (!n) { notify('Nothing is pinned','info'); return; }
+  S.history.forEach(h => { h.pinned = false; });
+  save(); renderHistory(); notify(`Unpinned ${n} item${n!==1?'s':''} ✓`,'success');
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1133,49 +1585,42 @@ function unpinAllHistory(){
 function openAdvPopover(histEntry, anchorEl) {
   _advEntry = histEntry;
   const pop = document.getElementById('adv-popover');
-  // Reset state
-  document.getElementById('adv-count').value = '5';
-  document.getElementById('adv-delay').value = '0';
+  document.getElementById('adv-count').value   = '5';
+  document.getElementById('adv-delay').value   = '0';
   document.getElementById('adv-results').innerHTML = '';
-  document.getElementById('adv-pw').style.display = 'none';
-  document.getElementById('adv-pb').style.width = '0';
-  document.getElementById('adv-pt').textContent = '0 / 0';
-  document.getElementById('adv-run-btn').disabled = false;
+  document.getElementById('adv-pw').style.display  = 'none';
+  document.getElementById('adv-pb').style.width    = '0';
+  document.getElementById('adv-pt').textContent    = '0 / 0';
+  document.getElementById('adv-run-btn').disabled  = false;
   document.getElementById('adv-run-btn').textContent = '▶ Run';
   _advRunning = false;
 
-  // Position popover near the Adv button
   const rect = anchorEl.getBoundingClientRect();
   pop.style.top  = Math.min(rect.bottom + 6, window.innerHeight - 420) + 'px';
   pop.style.left = Math.max(4, Math.min(rect.left - 100, window.innerWidth - 292)) + 'px';
   pop.style.display = 'block';
 }
 
-function closeAdvPopover(){
+function closeAdvPopover() {
   _advRunning = false;
   document.getElementById('adv-popover').style.display = 'none';
   _advEntry = null;
 }
 
 async function runAdvRepeat() {
-  if (!_advEntry) return;
-  if (_advRunning) return;
-
-  const count = Math.max(1, Math.min(500, parseInt(document.getElementById('adv-count').value) || 5));
-  const delay = Math.max(0, parseInt(document.getElementById('adv-delay').value) || 0);
+  if (!_advEntry || _advRunning) return;
+  const count   = Math.max(1, Math.min(500, parseInt(document.getElementById('adv-count').value) || 5));
+  const delay   = Math.max(0, parseInt(document.getElementById('adv-delay').value) || 0);
   const resultsEl = document.getElementById('adv-results');
-  const pbWrap = document.getElementById('adv-pw');
-  const pb     = document.getElementById('adv-pb');
-  const pt     = document.getElementById('adv-pt');
-  const runBtn = document.getElementById('adv-run-btn');
+  const pbWrap    = document.getElementById('adv-pw');
+  const pb        = document.getElementById('adv-pb');
+  const pt        = document.getElementById('adv-pt');
+  const runBtn    = document.getElementById('adv-run-btn');
 
   _advRunning = true;
-  runBtn.disabled = true;
-  runBtn.textContent = '⏳ Running…';
-  resultsEl.innerHTML = '';
-  pbWrap.style.display = 'block';
-  pb.style.width = '0';
-  pt.textContent = `0 / ${count}`;
+  runBtn.disabled = true; runBtn.textContent = '⏳ Running…';
+  resultsEl.innerHTML = ''; pbWrap.style.display = 'block';
+  pb.style.width = '0'; pt.textContent = `0 / ${count}`;
 
   const h = _advEntry;
   let passed = 0, failed = 0;
@@ -1186,69 +1631,105 @@ async function runAdvRepeat() {
     try {
       const url = resolveVars(h.url || '');
       const fHeaders = {};
-      // Build a minimal request matching the history entry
-      // (history stores method+url; for full headers/body, load from tab or use saved)
-      const resp = await fetchDirect(url, h.method || 'GET', fHeaders, null);
+      (h.headers || []).filter(x => x.on !== false && x.k).forEach(x => { fHeaders[x.k] = x.v; });
+      const resp = await fetchDirect(url, h.method || 'GET', fHeaders, h.rawBody && h.bodyType==='raw' ? h.rawBody : null);
       const ok = resp.status >= 200 && resp.status < 300;
       if (ok) passed++; else failed++;
-
       const row = document.createElement('div');
       row.className = 'adv-result-row';
-      row.innerHTML = `
-        <span class="adv-result-num">#${num}</span>
+      row.innerHTML = `<span class="adv-result-num">#${num}</span>
         <span class="adv-result-stat ${ok?'ok':'err'}">${resp.status} ${resp.statusText}</span>
-        <span class="adv-result-time">${resp._time}ms</span>
-      `;
+        <span class="adv-result-time">${resp._time}ms</span>`;
       resultsEl.appendChild(row);
       resultsEl.scrollTop = resultsEl.scrollHeight;
-
     } catch(e) {
       failed++;
       const row = document.createElement('div');
       row.className = 'adv-result-row';
-      row.innerHTML = `<span class="adv-result-num">#${num}</span><span class="adv-result-stat err">Error</span><span class="adv-result-time" style="color:var(--err);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.message)}</span>`;
+      row.innerHTML = `<span class="adv-result-num">#${num}</span>
+        <span class="adv-result-stat err">Error</span>
+        <span class="adv-result-time" style="color:var(--err);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.message)}</span>`;
       resultsEl.appendChild(row);
       resultsEl.scrollTop = resultsEl.scrollHeight;
     }
-
-    // Update progress
-    pb.style.width = Math.round(num / count * 100) + '%';
-    pt.textContent = `${num} / ${count}`;
+    pb.style.width   = Math.round(num / count * 100) + '%';
+    pt.textContent   = `${num} / ${count}`;
     pb.style.background = failed > 0 ? 'var(--warn)' : 'var(--ok)';
-
     if (delay > 0 && i < count - 1) await sleep(delay);
   }
-
   _advRunning = false;
-  runBtn.disabled = false;
-  runBtn.textContent = '▶ Run Again';
+  runBtn.disabled = false; runBtn.textContent = '▶ Run Again';
   notify(`Repeat done: ✅ ${passed}  ❌ ${failed}`, failed === 0 ? 'success' : 'warn');
 }
 
 // ─────────────────────────────────────────────────────────────
 // COLLECTIONS
 // ─────────────────────────────────────────────────────────────
-function renderCollections(){
-  const q=document.getElementById('coll-search').value.toLowerCase(),list=document.getElementById('coll-list');
-  const filtered=S.collections.filter(c=>c.name.toLowerCase().includes(q));
-  if(!filtered.length){list.innerHTML='<div class="empty-state"><div class="ei">📂</div><p>No collections yet.</p></div>';return;}
-  list.innerHTML=filtered.map(c=>renderCollItem(c)).join('');
+function renderCollections() {
+  const q = document.getElementById('coll-search').value.toLowerCase(), list = document.getElementById('coll-list');
+  const filtered = S.collections.filter(c => c.name.toLowerCase().includes(q));
+  if (!filtered.length) { list.innerHTML = '<div class="empty-state"><div class="ei">📂</div><p>No collections yet.</p></div>'; return; }
+  list.innerHTML = filtered.map(c => renderCollItem(c)).join('');
 }
-function renderCollItem(c){
-  const items=(c.requests||[]).map(item=>item._isFolder?`<div class="coll-folder"><div class="folder-header" onclick="toggleFolder('${c.id}','${item.id}')"><span class="folder-arrow" id="fa-${item.id}">▶</span>📁 ${esc(item.name)}</div><div class="folder-reqs" id="fr-${item.id}">${(item.requests||[]).map(r=>reqRowHtml(c.id,r,true)).join('')}</div></div>`:reqRowHtml(c.id,item,false)).join('');
-  return`<div class="coll-item" id="coll-${c.id}"><div class="coll-header" onclick="toggleColl('${c.id}')"><span class="coll-arrow" id="ca-${c.id}">▶</span><span class="coll-name" title="${esc(c.name)}">${esc(c.name)}</span><div class="coll-btns"><button class="icon-btn" title="Run" onclick="runCollModal(event,'${c.id}')">▶</button><button class="icon-btn" title="Add folder" onclick="addFolder(event,'${c.id}')">📁</button><button class="icon-btn" title="Add current request" onclick="addToColl(event,'${c.id}')">+</button><button class="icon-btn" title="Export" onclick="exportColl(event,'${c.id}')">⬇</button><button class="icon-btn del" title="Delete" onclick="delColl(event,'${c.id}')">🗑</button></div></div><div class="coll-reqs" id="cr-${c.id}">${items||'<div style="padding:8px;color:var(--text3);font-size:11px">Empty collection</div>'}</div></div>`;
+function renderCollItem(c) {
+  const items = (c.requests||[]).map(item => item._isFolder
+    ? `<div class="coll-folder"><div class="folder-header" onclick="toggleFolder('${c.id}','${item.id}')"><span class="folder-arrow" id="fa-${item.id}">▶</span>📁 ${esc(item.name)}</div><div class="folder-reqs" id="fr-${item.id}">${(item.requests||[]).map(r=>reqRowHtml(c.id,r,true)).join('')}</div></div>`
+    : reqRowHtml(c.id,item,false)).join('');
+  return `<div class="coll-item" id="coll-${c.id}">
+    <div class="coll-header" onclick="toggleColl('${c.id}')">
+      <span class="coll-arrow" id="ca-${c.id}">▶</span>
+      <span class="coll-name" title="${esc(c.name)}">${esc(c.name)}</span>
+      <div class="coll-btns">
+        <button class="icon-btn" title="Run"         onclick="runCollModal(event,'${c.id}')">▶</button>
+        <button class="icon-btn" title="Add folder"  onclick="addFolder(event,'${c.id}')">📁</button>
+        <button class="icon-btn" title="Add request" onclick="addToColl(event,'${c.id}')">+</button>
+        <button class="icon-btn" title="Export"      onclick="exportColl(event,'${c.id}')">⬇</button>
+        <button class="icon-btn del" title="Delete"  onclick="delColl(event,'${c.id}')">🗑</button>
+      </div>
+    </div>
+    <div class="coll-reqs" id="cr-${c.id}">${items||'<div style="padding:8px;color:var(--text3);font-size:11px">Empty collection</div>'}</div>
+  </div>`;
 }
-function reqRowHtml(collId,r,inFolder=false){return`<div class="req-row${inFolder?' folder-req-row':''}" onclick="loadCollReq('${collId}','${r.id}')"><span class="mbadge ${r.method}" style="color:${MC[r.method]||'var(--text2)'}">${r.method}</span><span class="req-name" title="${esc(r.name)}">${esc(r.name)}</span><div class="req-btns"><button class="icon-btn" title="Duplicate" onclick="dupReq(event,'${collId}','${r.id}')">⧉</button><button class="icon-btn del" title="Delete" onclick="delReq(event,'${collId}','${r.id}')">✕</button></div></div>`;}
-function toggleColl(id){document.getElementById('cr-'+id)?.classList.toggle('open');document.getElementById('ca-'+id)?.classList.toggle('open');}
-function toggleFolder(cid,fid){document.getElementById('fr-'+fid)?.classList.toggle('open');document.getElementById('fa-'+fid)?.classList.toggle('open');}
-function addFolder(e,collId){e.stopPropagation();const name=prompt('Folder name:');if(!name)return;const coll=S.collections.find(c=>c.id===collId);if(!coll)return;if(!coll.requests)coll.requests=[];coll.requests.push({id:uid(),name,_isFolder:true,requests:[]});save();renderCollections();}
+function reqRowHtml(collId, r, inFolder=false) {
+  return `<div class="req-row${inFolder?' folder-req-row':''}" onclick="loadCollReq('${collId}','${r.id}')">
+    <span class="mbadge ${r.method}" style="color:${MC[r.method]||'var(--text2)'}">${r.method}</span>
+    <span class="req-name" title="${esc(r.name)}">${esc(r.name)}</span>
+    <div class="req-btns">
+      <button class="icon-btn" title="Duplicate" onclick="dupReq(event,'${collId}','${r.id}')">⧉</button>
+      <button class="icon-btn del" title="Delete" onclick="delReq(event,'${collId}','${r.id}')">✕</button>
+    </div>
+  </div>`;
+}
+function toggleColl(id)        { document.getElementById('cr-'+id)?.classList.toggle('open'); document.getElementById('ca-'+id)?.classList.toggle('open'); }
+function toggleFolder(cid,fid) { document.getElementById('fr-'+fid)?.classList.toggle('open'); document.getElementById('fa-'+fid)?.classList.toggle('open'); }
+function addFolder(e,collId) {
+  e.stopPropagation(); const name=prompt('Folder name:'); if(!name)return;
+  const coll=S.collections.find(c=>c.id===collId); if(!coll)return;
+  if(!coll.requests)coll.requests=[];
+  coll.requests.push({id:uid(),name,_isFolder:true,requests:[]});
+  save(); renderCollections();
+}
 
-function runCollModal(e,id){
-  e.stopPropagation();const coll=S.collections.find(c=>c.id===id);if(!coll?.requests?.length){notify('Collection is empty','error');return;}
-  const reqs=(coll.requests||[]).filter(r=>!r._isFolder);
-  openModal(`<div class="modal-bg"><div class="modal lg"><div class="mh"><span class="mh-title">▶ Collection Runner — ${esc(coll.name)}</span><button class="m-close" onclick="closeModal()">✕</button></div><div class="mb"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px"><div class="fg"><label>ITERATIONS</label><input type="number" id="cr-iter" value="1" min="1" max="1000"></div><div class="fg"><label>DELAY (ms)</label><input type="number" id="cr-delay" value="0" min="0"></div><div class="fg"><label>STOP ON ERROR</label><label class="toggle" style="margin-top:6px"><input type="checkbox" id="cr-stop"><span class="t-slider"></span></label></div></div><div class="fg"><label>DATA FILE (CSV/JSON)</label><input type="file" id="cr-data" accept=".json,.csv"></div><div style="margin-bottom:10px"><div class="field-label">SELECT REQUESTS</div>${reqs.map(r=>`<div class="cr-req-item"><input type="checkbox" class="cr-req-chk kv-chk" data-rid="${r.id}" checked><span class="mbadge ${r.method}" style="color:${MC[r.method]||'var(--text2)'}">${r.method}</span><span>${esc(r.name)}</span></div>`).join('')}</div><div class="cr-progress-wrap"><div class="cr-progress-bar" id="cr-bar"></div></div><div id="cr-results" style="max-height:280px;overflow-y:auto;"></div></div><div class="mf"><button class="btn secondary" onclick="closeModal()">Close</button><button class="btn primary" onclick="doRunColl('${id}')">▶ Run</button></div></div></div>`);
+function runCollModal(e, id) {
+  e.stopPropagation();
+  const coll = S.collections.find(c=>c.id===id);
+  if (!coll?.requests?.length) { notify('Collection is empty','error'); return; }
+  const reqs = (coll.requests||[]).filter(r=>!r._isFolder);
+  openModal(`<div class="modal-bg"><div class="modal lg"><div class="mh"><span class="mh-title">▶ Collection Runner — ${esc(coll.name)}</span><button class="m-close" onclick="closeModal()">✕</button></div><div class="mb">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="fg"><label>ITERATIONS</label><input type="number" id="cr-iter" value="1" min="1" max="1000"></div>
+      <div class="fg"><label>DELAY (ms)</label><input type="number" id="cr-delay" value="0" min="0"></div>
+      <div class="fg"><label>STOP ON ERROR</label><label class="toggle" style="margin-top:6px"><input type="checkbox" id="cr-stop"><span class="t-slider"></span></label></div>
+    </div>
+    <div class="fg"><label>DATA FILE (CSV/JSON)</label><input type="file" id="cr-data" accept=".json,.csv"></div>
+    <div style="margin-bottom:10px"><div class="field-label">SELECT REQUESTS</div>
+      ${reqs.map(r=>`<div class="cr-req-item"><input type="checkbox" class="cr-req-chk kv-chk" data-rid="${r.id}" checked><span class="mbadge ${r.method}" style="color:${MC[r.method]||'var(--text2)'}">${r.method}</span><span>${esc(r.name)}</span></div>`).join('')}
+    </div>
+    <div class="cr-progress-wrap"><div class="cr-progress-bar" id="cr-bar"></div></div>
+    <div id="cr-results" style="max-height:280px;overflow-y:auto;"></div>
+  </div><div class="mf"><button class="btn secondary" onclick="closeModal()">Close</button><button class="btn primary" onclick="doRunColl('${id}')">▶ Run</button></div></div></div>`);
 }
-async function doRunColl(id){
+async function doRunColl(id) {
   const coll=S.collections.find(c=>c.id===id);if(!coll)return;
   const iters=parseInt(document.getElementById('cr-iter')?.value)||1,delay=parseInt(document.getElementById('cr-delay')?.value)||0,stop=document.getElementById('cr-stop')?.checked;
   const checkedIds=new Set([...document.querySelectorAll('.cr-req-chk:checked')].map(el=>el.dataset.rid));
@@ -1260,7 +1741,8 @@ async function doRunColl(id){
   const resultEl=document.getElementById('cr-results');resultEl.innerHTML='';
   for(let iter=0;iter<iters;iter++){for(const dataRow of dataRows){_iterInfo={iteration:iter,iterationCount:iters,dataRow};for(const req of reqs){
     try{
-      const url=resolveVars(req.url||'',dataRow);const h={};(req.headers||[]).filter(x=>x.on!==false&&(x.k||x.key)).forEach(x=>{h[resolveVars(x.k||x.key,dataRow)]=resolveVars(x.v||x.value||'',dataRow);});
+      const url=resolveVars(req.url||'',dataRow);const h={};
+      (req.headers||[]).filter(x=>x.on!==false&&(x.k||x.key)).forEach(x=>{h[resolveVars(x.k||x.key,dataRow)]=resolveVars(x.v||x.value||'',dataRow);});
       if(req.preScript?.trim()){const pm=buildPM(null,coll.variables||{});runScript(req.preScript,pm);}
       const ro=await fetchDirect(url,req.method||'GET',h,req.rawBody&&!['GET','HEAD'].includes(req.method)?resolveVars(req.rawBody,dataRow):null);
       _testResults=[];if(req.testScript?.trim()){const pm=buildPM(ro,coll.variables||{});runScript(req.testScript,pm);}
@@ -1277,38 +1759,14 @@ async function doRunColl(id){
 function openNewColl(){openModal(`<div class="modal-bg"><div class="modal sm"><div class="mh"><span class="mh-title">New Collection</span><button class="m-close" onclick="closeModal()">✕</button></div><div class="mb"><div class="fg"><label>NAME</label><input id="nc-name" placeholder="My Collection" autofocus></div><div class="fg"><label>DESCRIPTION</label><textarea id="nc-desc" rows="2" style="width:100%;resize:none" placeholder="Optional"></textarea></div></div><div class="mf"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="createColl()">Create</button></div></div></div>`);setTimeout(()=>document.getElementById('nc-name')?.focus(),50);}
 function createColl(){const name=document.getElementById('nc-name').value.trim();if(!name){notify('Name required','error');return;}S.collections.push({id:uid(),name,desc:document.getElementById('nc-desc').value,requests:[],variables:{},created:Date.now()});save();renderCollections();closeModal();notify('Collection created!','success');}
 function delColl(e,id){e.stopPropagation();if(!confirm('Delete this collection?'))return;S.collections=S.collections.filter(c=>c.id!==id);save();renderCollections();}
-function addToColl(e,id){
-  e.stopPropagation();saveTabUI();const tab=getActiveTab(),coll=S.collections.find(c=>c.id===id);if(!coll||!tab)return;
-  const name=prompt('Request name:',tab.name||'New Request');if(!name)return;
-  if(!coll.requests)coll.requests=[];
-  coll.requests.push({id:uid(),name,method:tab.method||'GET',url:tab.url||'',headers:tab.headers||[],params:tab.params||[],rawBody:tab.rawBody||'',bodyType:tab.bodyType||'none',rawFmt:tab.rawFmt||'json',authType:tab.authType||'none',authData:tab.authData||{},preScript:tab.preScript||'',testScript:tab.testScript||''});
-  save();renderCollections();notify('Saved to collection!','success');
-}
-function saveToCollection(){
-  saveTabUI();const tab=getActiveTab();if(!S.collections.length){openNewColl();return;}
-  openModal(`<div class="modal-bg"><div class="modal sm"><div class="mh"><span class="mh-title">💾 Save Request</span><button class="m-close" onclick="closeModal()">✕</button></div><div class="mb"><div class="fg"><label>REQUEST NAME</label><input id="sr-name" value="${esc(tab?.name||'New Request')}"></div><div class="fg"><label>COLLECTION</label><select id="sr-coll" style="width:100%">${S.collections.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div></div><div class="mf"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="doSave()">Save</button></div></div></div>`);
-}
+function addToColl(e,id){e.stopPropagation();saveTabUI();const tab=getActiveTab(),coll=S.collections.find(c=>c.id===id);if(!coll||!tab)return;const name=prompt('Request name:',tab.name||'New Request');if(!name)return;if(!coll.requests)coll.requests=[];coll.requests.push({id:uid(),name,method:tab.method||'GET',url:tab.url||'',headers:tab.headers||[],params:tab.params||[],rawBody:tab.rawBody||'',bodyType:tab.bodyType||'none',rawFmt:tab.rawFmt||'json',authType:tab.authType||'none',authData:tab.authData||{},preScript:tab.preScript||'',testScript:tab.testScript||''});save();renderCollections();notify('Saved to collection!','success');}
+function saveToCollection(){saveTabUI();const tab=getActiveTab();if(!S.collections.length){openNewColl();return;}openModal(`<div class="modal-bg"><div class="modal sm"><div class="mh"><span class="mh-title">💾 Save Request</span><button class="m-close" onclick="closeModal()">✕</button></div><div class="mb"><div class="fg"><label>REQUEST NAME</label><input id="sr-name" value="${esc(tab?.name||'New Request')}"></div><div class="fg"><label>COLLECTION</label><select id="sr-coll" style="width:100%">${S.collections.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div></div><div class="mf"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="doSave()">Save</button></div></div></div>`);}
 function doSave(){const name=document.getElementById('sr-name').value.trim(),id=document.getElementById('sr-coll').value;const coll=S.collections.find(c=>c.id===id),tab=getActiveTab();if(!coll||!name)return;if(!coll.requests)coll.requests=[];coll.requests.push({id:uid(),name,method:tab?.method||'GET',url:tab?.url||'',headers:tab?.headers||[],params:tab?.params||[],rawBody:tab?.rawBody||'',bodyType:tab?.bodyType||'none',rawFmt:tab?.rawFmt||'json',authType:tab?.authType||'none',authData:tab?.authData||{},preScript:tab?.preScript||'',testScript:tab?.testScript||''});if(tab)tab.name=name;save();renderCollections();renderTabs();closeModal();notify('Saved!','success');}
 function loadCollReq(cid,rid){const coll=S.collections.find(c=>c.id===cid);let req=coll?.requests?.find(r=>r.id===rid);if(!req){for(const item of coll?.requests||[]){if(item._isFolder){req=item.requests?.find(r=>r.id===rid);if(req)break;}}}if(!req)return;newTab({...req});}
 function dupReq(e,cid,rid){e.stopPropagation();const coll=S.collections.find(c=>c.id===cid),req=coll?.requests?.find(r=>r.id===rid);if(!req||!coll)return;coll.requests.push({...req,id:uid(),name:req.name+' (copy)'});save();renderCollections();notify('Duplicated!','success');}
 function delReq(e,cid,rid){e.stopPropagation();const coll=S.collections.find(c=>c.id===cid);if(!coll)return;coll.requests=coll.requests.filter(r=>r.id!==rid);save();renderCollections();}
 
-function mapToPostman(r){
-  return {
-    name:r.name,
-    request:{
-      method:r.method||'GET',
-      url:{raw:r.url||'',host:[],path:[],query:[],variable:[]},
-      header:(r.headers||[]).filter(h=>h.k).map(h=>({key:h.k,value:h.v,disabled:!h.on})),
-      body:r.bodyType!=='none'?{mode:r.bodyType==='raw'?'raw':r.bodyType,raw:r.rawBody||''}:undefined,
-      auth:r.authType!=='none'?{type:r.authType}:undefined
-    },
-    event:[
-      ...(r.preScript?[{listen:'prerequest',script:{exec:r.preScript.split('\n'),type:'text/javascript'}}]:[]),
-      ...(r.testScript?[{listen:'test',script:{exec:r.testScript.split('\n'),type:'text/javascript'}}]:[])
-    ]
-  };
-}
+function mapToPostman(r){return{name:r.name,request:{method:r.method||'GET',url:{raw:r.url||'',host:[],path:[],query:[],variable:[]},header:(r.headers||[]).filter(h=>h.k).map(h=>({key:h.k,value:h.v,disabled:!h.on})),body:r.bodyType!=='none'?{mode:r.bodyType==='raw'?'raw':r.bodyType,raw:r.rawBody||''}:undefined,auth:r.authType!=='none'?{type:r.authType}:undefined},event:[...(r.preScript?[{listen:'prerequest',script:{exec:r.preScript.split('\n'),type:'text/javascript'}}]:[]),...(r.testScript?[{listen:'test',script:{exec:r.testScript.split('\n'),type:'text/javascript'}}]:[])]}}
 function exportColl(e,id){e.stopPropagation();const coll=S.collections.find(c=>c.id===id);if(!coll)return;dl(JSON.stringify({info:{name:coll.name,description:coll.desc||'',schema:'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'},variable:Object.entries(coll.variables||{}).map(([k,v])=>({key:k,value:v})),item:(coll.requests||[]).map(r=>r._isFolder?{name:r.name,item:(r.requests||[]).map(mapToPostman)}:mapToPostman(r))},null,2),coll.name.replace(/\s+/g,'_')+'.postman_collection.json');notify('Exported!','success');}
 function exportAllColls(){dl(JSON.stringify(S.collections,null,2),'postmanweb_collections.json');notify('All collections exported!','success');}
 
@@ -1326,7 +1784,6 @@ function addEvRow(){const div=document.createElement('div');div.className='ev-ro
 function saveEnv(id){const env=S.envs.find(x=>x.id===id);if(!env)return;env.variables={};document.querySelectorAll('#ev-list .ev-row').forEach(row=>{const[k,v]=row.querySelectorAll('input');if(k.value.trim())env.variables[k.value.trim()]=v.value;});save();renderEnvs();closeModal();notify('Environment saved!','success');}
 function delEnv(e,id){e.stopPropagation();if(!confirm('Delete this environment?'))return;S.envs=S.envs.filter(x=>x.id!==id);if(S.activeEnv===id)S.activeEnv=null;save();renderEnvs();}
 function exportEnv(e,id){e.stopPropagation();const env=S.envs.find(x=>x.id===id);if(!env)return;dl(JSON.stringify({id:env.id,name:env.name,values:Object.entries(env.variables||{}).map(([k,v])=>({key:k,value:v,enabled:true}))},null,2),env.name.replace(/\s+/g,'_')+'.postman_environment.json');}
-function openEnvSB(){switchSB('envs');document.getElementById('sidebar').classList.remove('hidden');}
 
 // ─────────────────────────────────────────────────────────────
 // GLOBALS
@@ -1424,9 +1881,33 @@ function doImport(){
   }catch(e){notify('Invalid JSON: '+e.message,'error');}
 }
 function importCurl(curl){
-  try{const mm=curl.match(/-X\s+(\w+)/i)||curl.match(/--request\s+(\w+)/i);const um=curl.match(/curl\s+(?:-[^\s]+\s+)*['"]?([^\s'"]+)['"]?/);const hm=[...curl.matchAll(/-H\s+['"]([^'"]+)['"]/gi)];const dm=curl.match(/(?:--data(?:-raw|-binary)?|-d)\s+['"]([^'"]*)['"]/i)||curl.match(/--data '([^']*)'/i);const method=(mm?.[1]||'GET').toUpperCase(),url=um?.[1]||'';const headers=hm.map(m=>{const[k,...v]=m[1].split(':');return{id:uid(),on:true,k:k.trim(),v:v.join(':').trim(),desc:''};});const body=dm?.[1]||'';newTab({method,url,name:url.replace(/^https?:\/\//,'').slice(0,40)||'Imported',headers,rawBody:body,bodyType:body?'raw':'none',rawFmt:'json'});notify('Imported from cURL!','success');}catch(e){notify('cURL parse error: '+e.message,'error');}
+  try{
+    const mm=curl.match(/-X\s+(\w+)/i)||curl.match(/--request\s+(\w+)/i);
+    const um=curl.match(/curl\s+(?:-[^\s]+\s+)*['"]?([^\s'"]+)['"]?/);
+    const hm=[...curl.matchAll(/-H\s+['"]([^'"]+)['"]/gi)];
+    const dm=curl.match(/(?:--data(?:-raw|-binary)?|-d)\s+['"]([^'"]*)['"]/i)||curl.match(/--data '([^']*)'/i);
+    const method=(mm?.[1]||'GET').toUpperCase(),url=um?.[1]||'';
+    const headers=hm.map(m=>{const[k,...v]=m[1].split(':');return{id:uid(),on:true,k:k.trim(),v:v.join(':').trim(),desc:''};});
+    const body=dm?.[1]||'';
+    newTab({method,url,name:url.replace(/^https?:\/\//,'').slice(0,40)||'Imported',headers,rawBody:body,bodyType:body?'raw':'none',rawFmt:'json'});
+    notify('Imported from cURL!','success');
+  }catch(e){notify('cURL parse error: '+e.message,'error');}
 }
-function importOpenAPI(spec){const coll={id:uid(),name:spec.info?.title||'OpenAPI Import',desc:spec.info?.description||'',requests:[],variables:{}};const base=(spec.servers?.[0]?.url||'')+(spec.basePath||'');Object.entries(spec.paths||{}).forEach(([path,pathItem])=>{['get','post','put','patch','delete','head','options'].forEach(m=>{if(!pathItem[m])return;const op=pathItem[m];const headers=[],params=[];(op.parameters||[]).forEach(p=>{if(p.in==='header')headers.push({id:uid(),on:true,k:p.name,v:p.example||'',desc:p.description||''});else if(p.in==='query')params.push({id:uid(),on:true,k:p.name,v:p.example||'',desc:p.description||''});});let rawBody='',bodyType='none';if(op.requestBody){const ct=op.requestBody.content||{};const j=ct['application/json'];if(j?.example){rawBody=JSON.stringify(j.example,null,2);bodyType='raw';}}coll.requests.push({id:uid(),name:op.summary||op.operationId||(m.toUpperCase()+' '+path),method:m.toUpperCase(),url:base+path,headers,params,rawBody,bodyType,rawFmt:'json',authType:'none',authData:{},preScript:'',testScript:''});});});S.collections.push(coll);save();renderCollections();notify(`✅ OpenAPI imported — ${coll.requests.length} endpoints`,'success');}
+function importOpenAPI(spec){
+  const coll={id:uid(),name:spec.info?.title||'OpenAPI Import',desc:spec.info?.description||'',requests:[],variables:{}};
+  const base=(spec.servers?.[0]?.url||'')+(spec.basePath||'');
+  Object.entries(spec.paths||{}).forEach(([path,pathItem])=>{
+    ['get','post','put','patch','delete','head','options'].forEach(m=>{
+      if(!pathItem[m])return;const op=pathItem[m];
+      const headers=[],params=[];
+      (op.parameters||[]).forEach(p=>{if(p.in==='header')headers.push({id:uid(),on:true,k:p.name,v:p.example||'',desc:p.description||''});else if(p.in==='query')params.push({id:uid(),on:true,k:p.name,v:p.example||'',desc:p.description||''});});
+      let rawBody='',bodyType='none';
+      if(op.requestBody){const ct=op.requestBody.content||{};const j=ct['application/json'];if(j?.example){rawBody=JSON.stringify(j.example,null,2);bodyType='raw';}}
+      coll.requests.push({id:uid(),name:op.summary||op.operationId||(m.toUpperCase()+' '+path),method:m.toUpperCase(),url:base+path,headers,params,rawBody,bodyType,rawFmt:'json',authType:'none',authData:{},preScript:'',testScript:''});
+    });
+  });
+  S.collections.push(coll);save();renderCollections();notify(`✅ OpenAPI imported — ${coll.requests.length} endpoints`,'success');
+}
 
 // ─────────────────────────────────────────────────────────────
 // COOKIE MANAGER
@@ -1469,7 +1950,7 @@ function openSettings(){
     <div class="s-sec"><div class="s-sec-title">KEYBOARD SHORTCUTS</div>
       <div style="font-size:11px;color:var(--text2);line-height:2.2;font-family:var(--mono)">
         <b>Ctrl+Enter</b> Send &nbsp; <b>Ctrl+T</b> New Tab &nbsp; <b>Ctrl+W</b> Close Tab<br>
-        <b>Ctrl+S</b> Save &nbsp; <b>Ctrl+\</b> Toggle Sidebar &nbsp; <b>Esc</b> Cancel / Close Enlarge
+        <b>Ctrl+S</b> Save &nbsp; <b>Ctrl+\\</b> Toggle Sidebar &nbsp; <b>Esc</b> Cancel / Close
       </div>
     </div>
     <div class="s-sec"><div class="s-sec-title">ABOUT</div>
@@ -1522,41 +2003,41 @@ function init(){
   refreshHistDot();
 
   // Close fullscreen / adv popover on Escape
-  document.addEventListener('keydown',e=>{
-    const mod=e.ctrlKey||e.metaKey;
-    if(e.key==='Escape'){
-      if(document.getElementById('fs-overlay').style.display!=='none'){closeEnlarge();return;}
-      if(document.getElementById('adv-popover').style.display!=='none'){closeAdvPopover();return;}
-      if(_abortCtrl)cancelReq();
+  document.addEventListener('keydown', e => {
+    const mod = e.ctrlKey || e.metaKey;
+    if (e.key === 'Escape') {
+      if (document.getElementById('fs-overlay').style.display !== 'none') { closeEnlarge(); return; }
+      if (document.getElementById('adv-popover').style.display !== 'none') { closeAdvPopover(); return; }
+      if (_abortCtrl) cancelReq();
     }
-    if(mod&&e.key==='Enter'){e.preventDefault();sendRequest();}
-    if(mod&&e.key==='t'){e.preventDefault();newTab();}
-    if(mod&&e.key==='w'){e.preventDefault();closeTab(S.activeId);}
-    if(mod&&e.key==='s'){e.preventDefault();saveToCollection();}
-    if(mod&&e.key==='\\'){e.preventDefault();toggleSB();}
+    if (mod && e.key === 'Enter') { e.preventDefault(); sendRequest(); }
+    if (mod && e.key === 't')     { e.preventDefault(); newTab(); }
+    if (mod && e.key === 'w')     { e.preventDefault(); closeTab(S.activeId); }
+    if (mod && e.key === 's')     { e.preventDefault(); saveToCollection(); }
+    if (mod && e.key === '\\')    { e.preventDefault(); toggleSB(); }
   });
 
   // Close adv popover when clicking outside
   document.addEventListener('click', e => {
     const pop = document.getElementById('adv-popover');
-    if(pop.style.display !== 'none' && !pop.contains(e.target) && !e.target.closest('[data-action="adv"]')) {
+    if (pop.style.display !== 'none' && !pop.contains(e.target) && !e.target.closest('[data-action="adv"]')) {
       closeAdvPopover();
     }
   });
 
   // URL input: auto-name, path vars, direct badge
-  document.getElementById('url-in').addEventListener('input',e=>{
-    const tab=getActiveTab();
-    if(tab&&e.target.value){
-      tab.url=e.target.value;
-      tab.name=e.target.value.replace(/^https?:\/\//,'').replace(/\?.*$/,'').slice(0,40)||'New Request';
+  document.getElementById('url-in').addEventListener('input', e => {
+    const tab = getActiveTab();
+    if (tab && e.target.value) {
+      tab.url  = e.target.value;
+      tab.name = e.target.value.replace(/^https?:\/\//,'').replace(/\?.*$/,'').slice(0,40) || 'New Request';
       renderTabs();
-      updatePathVars(e.target.value,tab.pathVars||[]);
+      updatePathVars(e.target.value, tab.pathVars || []);
       refreshDirectBadge(e.target.value);
     }
   });
 
-  document.getElementById('method-sel').addEventListener('change',colorMethod);
+  document.getElementById('method-sel').addEventListener('change', colorMethod);
 }
 
 init();
