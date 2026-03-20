@@ -1,90 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PostmanWeb v4.0 – Full API Platform</title>
+<title>PostmanWeb v4 – Full API Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- TOPBAR -->
+<!-- ═══════════════════════════════════════════════════════════
+     TOPBAR
+═══════════════════════════════════════════════════════════ -->
 <div id="topbar">
   <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" fill="var(--accent)" opacity=".15"/>
-      <path d="M12 7v5l3.5 2" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="12" cy="12" r="3" fill="var(--accent)" opacity=".5"/>
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+      <circle cx="12" cy="12" r="10" fill="var(--accent)" opacity=".18"/>
+      <circle cx="12" cy="12" r="5"  fill="var(--accent)" opacity=".35"/>
+      <path d="M12 7v5l3 3" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/>
     </svg>
     PostmanWeb
   </div>
-  <div id="tabsbar"></div>
-  <button id="btn-nt" onclick="newTab()" title="New Tab (Ctrl+T)">＋</button>
-  <div class="trw">
-    <button id="cors-btn" onclick="toggleCORS()" title="Toggle CORS Proxy ON/OFF">⚡ CORS: OFF</button>
-    <button class="bico" title="WebSocket Client" onclick="openWS()">🔌</button>
-    <button class="bico" title="Environments" onclick="openEnvSB()">🌍</button>
-    <button class="bico" title="Import" onclick="openImport()">📥</button>
-    <button class="bico" title="Mock Server" onclick="openMocks()">🎭</button>
-    <button class="bico" title="Settings" onclick="openSettings()">⚙</button>
+
+  <!-- Workspace selector -->
+  <div class="ws-bar">
+    <select id="ws-sel" onchange="switchWorkspace(this.value)" title="Switch Workspace"></select>
+    <button class="btn-topbar" onclick="openNewWorkspace()" title="New Workspace">＋</button>
+  </div>
+
+  <!-- Tabs strip -->
+  <div id="tabs"></div>
+  <button id="btn-new-tab" onclick="newTab()" title="New Tab  Ctrl+T">＋</button>
+
+  <!-- Right controls -->
+  <div class="topbar-right">
+    <button id="cors-btn" onclick="toggleCORS()" title="Toggle CORS Proxy">⚡ CORS: OFF</button>
+
+    <!-- Environment quick-switch -->
+    <select id="env-quick" class="env-quick-sel" onchange="quickEnvSwitch(this.value)" title="Active Environment">
+      <option value="">No Environment</option>
+    </select>
+
+    <button class="btn-topbar" onclick="openGRPC()"      title="gRPC Client">gRPC</button>
+    <button class="btn-topbar" onclick="openWS()"        title="WebSocket">🔌 WS</button>
+    <button class="btn-topbar" onclick="openMockServer()" title="Mock Server">🎭 Mock</button>
+    <button class="btn-topbar" onclick="openImport()"    title="Import">📥</button>
+    <button class="btn-topbar" onclick="toggleTheme()"   title="Toggle Theme" id="theme-btn">🌙</button>
+    <button class="btn-topbar" onclick="openSettings()"  title="Settings">⚙</button>
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN  (sidebar + workspace)
+═══════════════════════════════════════════════════════════ -->
 <div id="main">
 
-  <!-- SIDEBAR -->
-  <div id="sb">
-    <div class="sbt">
-      <div class="sbtab act" data-sb="colls" onclick="switchSB('colls')">COLLS</div>
-      <div class="sbtab" data-sb="history" onclick="switchSB('history')">HISTORY</div>
-      <div class="sbtab" data-sb="envs" onclick="switchSB('envs')">ENVS</div>
+  <!-- ─────────────── SIDEBAR ─────────────── -->
+  <div id="sidebar">
+    <div class="sb-tabs">
+      <div class="sb-tab active" data-sb="colls"   onclick="switchSB('colls')">COLLS</div>
+      <div class="sb-tab"        data-sb="history" onclick="switchSB('history')">HISTORY</div>
+      <div class="sb-tab"        data-sb="envs"    onclick="switchSB('envs')">ENVS</div>
     </div>
 
-    <!-- COLLECTIONS PANEL -->
-    <div class="sbpanel act" id="sbp-colls">
-      <div class="sbsearch"><input id="collsearch" type="text" placeholder="Search collections..." oninput="renderColls()"></div>
-      <div class="sbact">
-        <button class="bs ac" onclick="openNewColl()">+ New</button>
-        <button class="bs" onclick="openImport()">Import</button>
-        <button class="bs" onclick="exportAllColls()">Export</button>
+    <!-- COLLECTIONS panel -->
+    <div class="sb-panel active" id="sbp-colls">
+      <div class="sb-search">
+        <input id="coll-search" type="text" placeholder="Search collections…" oninput="renderCollections()">
       </div>
-      <div class="sblist" id="colllist"></div>
+      <div class="sb-actions">
+        <button class="btn-s accent" onclick="openNewColl()">+ New</button>
+        <button class="btn-s"        onclick="openImport()">Import</button>
+        <button class="btn-s"        onclick="exportAllColls()">Export All</button>
+      </div>
+      <div class="sb-list" id="coll-list"></div>
     </div>
 
-    <!-- HISTORY PANEL -->
-    <div class="sbpanel" id="sbp-history">
-      <div class="htogg">
-        <div class="hlbl"><span class="hdot" id="hdot"></span>RECORD HISTORY</div>
-        <label class="tog"><input type="checkbox" id="histtog" onchange="toggleHist()" checked><span class="tsl"></span></label>
+    <!-- HISTORY panel -->
+    <div class="sb-panel" id="sbp-history">
+      <div class="hist-toggle">
+        <div class="hist-label">
+          <span class="hrec-dot" id="hist-dot"></span>RECORD HISTORY
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="hist-toggle" onchange="toggleHistRec()" checked>
+          <span class="t-slider"></span>
+        </label>
       </div>
-      <div class="sbact">
-        <button class="bs dg" onclick="clearHistory()">🗑 Clear All</button>
-        <button class="bs" onclick="unpinAll()">📌 Unpin All</button>
+      <div class="sb-actions">
+        <button class="btn-s danger" onclick="clearHistory()">🗑 Clear All</button>
+        <button class="btn-s"        onclick="unpinAll()">📌 Unpin All</button>
       </div>
-      <div class="sblist" id="histlist" style="padding:4px"></div>
+      <div class="sb-list" id="hist-list"></div>
     </div>
 
-    <!-- ENVS PANEL -->
-    <div class="sbpanel" id="sbp-envs">
-      <div class="sbact">
-        <button class="bs ac" onclick="openNewEnv()">+ New Env</button>
-        <button class="bs" onclick="openGlobals()">🌐 Globals</button>
+    <!-- ENVIRONMENTS panel -->
+    <div class="sb-panel" id="sbp-envs">
+      <div class="sb-actions">
+        <button class="btn-s accent" onclick="openNewEnv()">+ New Env</button>
+        <button class="btn-s"        onclick="openGlobals()">🌐 Globals</button>
       </div>
-      <div class="sblist" id="envlist"></div>
+      <div class="sb-list" id="env-list"></div>
     </div>
+  </div><!-- /sidebar -->
 
-  </div>
-
-  <!-- WORKSPACE -->
-  <div id="ws">
+  <!-- ─────────────── WORKSPACE ─────────────── -->
+  <div id="workspace">
 
     <!-- URL BAR -->
-    <div id="ubar">
-      <button class="bico" onclick="toggleSB()" title="Toggle Sidebar (Ctrl+\)">☰</button>
-      <select id="msel" onchange="colorMethod()">
+    <div id="urlbar">
+      <button class="btn-icon-url" onclick="toggleSB()" title="Toggle Sidebar  Ctrl+\">☰</button>
+
+      <select id="method-sel" onchange="colorMethod()">
         <option value="GET">GET</option>
         <option value="POST">POST</option>
         <option value="PUT">PUT</option>
@@ -93,117 +121,172 @@
         <option value="HEAD">HEAD</option>
         <option value="OPTIONS">OPTIONS</option>
       </select>
-      <input id="urlin" type="text" placeholder="https://api.example.com/endpoint  •  use {{variable}} for dynamic values" autocomplete="off" spellcheck="false">
-      <button id="savebtn" onclick="saveToColl()" title="Save (Ctrl+S)">💾 Save</button>
-      <button id="cancelbtn" onclick="cancelReq()" title="Cancel (Esc)">✕ Cancel</button>
-      <button id="sbtn" onclick="sendRequest()" title="Send (Ctrl+Enter)">Send ➤</button>
+
+      <input id="url-in" type="text"
+        placeholder="https://api.example.com/endpoint   •   {{variable}}   •   :pathVar   •   {pathVar}"
+        autocomplete="off" spellcheck="false">
+
+      <button id="save-btn"   onclick="saveToCollection()" title="Save  Ctrl+S">💾 Save</button>
+      <button id="cancel-btn" onclick="cancelReq()"        title="Cancel  Esc"  style="display:none">✕ Cancel</button>
+      <button id="send-btn"   onclick="sendRequest()"      title="Send  Ctrl+Enter">Send ➤</button>
     </div>
 
     <!-- SPLIT PANE -->
     <div id="split">
 
-      <!-- REQUEST AREA -->
-      <div id="reqarea" style="height:47%;min-height:120px;display:flex;flex-direction:column;">
-        <div class="ptabs">
-          <div class="reqptab ptab act" data-rp="params" onclick="switchReqPanel('params')">Params</div>
-          <div class="reqptab ptab" data-rp="headers" onclick="switchReqPanel('headers')">Headers</div>
-          <div class="reqptab ptab" data-rp="body" onclick="switchReqPanel('body')">Body</div>
-          <div class="reqptab ptab" data-rp="auth" onclick="switchReqPanel('auth')">Authorization</div>
-          <div class="reqptab ptab" data-rp="pre" onclick="switchReqPanel('pre')">Pre-req Script</div>
-          <div class="reqptab ptab" data-rp="tests" onclick="switchReqPanel('tests')">Tests</div>
-          <div class="reqptab ptab" data-rp="docs" onclick="switchReqPanel('docs')">Description</div>
-          <div class="reqptab ptab" data-rp="rsettings" onclick="switchReqPanel('rsettings')">Settings</div>
-          <div class="reqptab ptab" style="margin-left:auto;color:var(--t3)" onclick="openCodegen()">{ } Code</div>
+      <!-- ── REQUEST AREA ── -->
+      <div id="req-area">
+
+        <!-- Request panel tabs -->
+        <div class="ptabs" id="req-ptabs">
+          <div class="ptab active" data-panel="params"    onclick="switchReqPanel('params')">Params</div>
+          <div class="ptab"        data-panel="pathvars"  onclick="switchReqPanel('pathvars')">Path Variables</div>
+          <div class="ptab"        data-panel="headers"   onclick="switchReqPanel('headers')">Headers</div>
+          <div class="ptab"        data-panel="body"      onclick="switchReqPanel('body')">Body</div>
+          <div class="ptab"        data-panel="auth"      onclick="switchReqPanel('auth')">Auth</div>
+          <div class="ptab"        data-panel="pre"       onclick="switchReqPanel('pre')">Pre-req Script</div>
+          <div class="ptab"        data-panel="tests"     onclick="switchReqPanel('tests')">Tests</div>
+          <div class="ptab"        data-panel="rsettings" onclick="switchReqPanel('rsettings')">Settings</div>
+          <div class="ptab codegen-tab"                   onclick="openCodegen()">{ } Code</div>
         </div>
-        <div class="pcont">
 
-          <!-- PARAMS -->
-          <div class="reqtp tp act" id="rp-params">
-            <table class="kvt"><thead><tr><th style="width:24px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:24px"></th></tr></thead>
-            <tbody id="kv-params"></tbody></table>
-            <button class="arow" onclick="addKVRow('params')">+ Add Parameter</button>
+        <div class="pcontent" id="req-pcontent">
+
+          <!-- ═══ PARAMS ═══ -->
+          <div class="tpanel active" id="rp-params">
+            <table class="kv-tbl">
+              <thead><tr>
+                <th style="width:24px"></th>
+                <th>Key</th><th>Value</th><th>Description</th>
+                <th style="width:24px"></th>
+              </tr></thead>
+              <tbody id="kv-params"></tbody>
+            </table>
+            <button class="add-row-btn" onclick="addKVRow('params')">+ Add Parameter</button>
           </div>
 
-          <!-- HEADERS -->
-          <div class="reqtp tp" id="rp-headers">
-            <table class="kvt"><thead><tr><th style="width:24px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:24px"></th></tr></thead>
-            <tbody id="kv-headers"></tbody></table>
-            <button class="arow" onclick="addKVRow('headers')">+ Add Header</button>
+          <!-- ═══ PATH VARIABLES ═══ -->
+          <div class="tpanel" id="rp-pathvars">
+            <div class="pv-hint">
+              Path variables are auto-extracted from URL segments like <code>/:id</code> or <code>/{userId}</code>.
+              Values support <code>{{variable}}</code> syntax.
+            </div>
+            <table class="kv-tbl">
+              <thead><tr>
+                <th>Variable</th><th>Value</th><th>Description</th>
+                <th style="width:24px"></th>
+              </tr></thead>
+              <tbody id="kv-pathvars"></tbody>
+            </table>
+            <div id="pv-empty" class="pv-empty">No path variables detected — add <code>:param</code> or <code>{param}</code> to the URL.</div>
           </div>
 
-          <!-- BODY -->
-          <div class="reqtp tp" id="rp-body">
-            <div class="btr">
-              <button class="bbtn act" data-type="none" onclick="setBodyType('none')">none</button>
-              <button class="bbtn" data-type="form" onclick="setBodyType('form')">form-data</button>
-              <button class="bbtn" data-type="urlenc" onclick="setBodyType('urlenc')">x-www-form-urlencoded</button>
-              <button class="bbtn" data-type="raw" onclick="setBodyType('raw')">raw</button>
-              <button class="bbtn" data-type="binary" onclick="setBodyType('binary')">binary</button>
-              <button class="bbtn" data-type="graphql" onclick="setBodyType('graphql')">GraphQL</button>
-              <button class="bbtn" data-type="grpc" onclick="setBodyType('grpc')">gRPC</button>
+          <!-- ═══ HEADERS ═══ -->
+          <div class="tpanel" id="rp-headers">
+            <table class="kv-tbl">
+              <thead><tr>
+                <th style="width:24px"></th>
+                <th>Key</th><th>Value</th><th>Description</th>
+                <th style="width:24px"></th>
+              </tr></thead>
+              <tbody id="kv-headers"></tbody>
+            </table>
+            <button class="add-row-btn" onclick="addKVRow('headers')">+ Add Header</button>
+          </div>
+
+          <!-- ═══ BODY ═══ -->
+          <div class="tpanel" id="rp-body">
+            <div class="btype-row">
+              <button class="btype-btn active" data-type="none"     onclick="setBody('none')">none</button>
+              <button class="btype-btn"        data-type="form"     onclick="setBody('form')">form-data</button>
+              <button class="btype-btn"        data-type="urlenc"   onclick="setBody('urlenc')">x-www-form-urlencoded</button>
+              <button class="btype-btn"        data-type="raw"      onclick="setBody('raw')">raw</button>
+              <button class="btype-btn"        data-type="binary"   onclick="setBody('binary')">binary</button>
+              <button class="btype-btn"        data-type="graphql"  onclick="setBody('graphql')">GraphQL</button>
             </div>
 
-            <div id="body-none" style="color:var(--t3);font-size:12px;padding:4px 0">This request has no body.</div>
-
-            <div id="body-form" style="display:none">
-              <table class="kvt"><thead><tr><th style="width:24px"></th><th>Key</th><th>Value</th><th>Type</th><th style="width:24px"></th></tr></thead>
-              <tbody id="kv-form"></tbody></table>
-              <button class="arow" onclick="addFormRow()">+ Add Field</button>
+            <!-- none -->
+            <div id="body-none" class="body-sub">
+              <p class="muted-msg">No body will be sent with this request.</p>
             </div>
 
-            <div id="body-urlenc" style="display:none">
-              <table class="kvt"><thead><tr><th style="width:24px"></th><th>Key</th><th>Value</th><th>Description</th><th style="width:24px"></th></tr></thead>
-              <tbody id="kv-urlenc"></tbody></table>
-              <button class="arow" onclick="addKVRow('urlenc')">+ Add Field</button>
+            <!-- form-data -->
+            <div id="body-form" class="body-sub" style="display:none">
+              <table class="kv-tbl">
+                <thead><tr>
+                  <th style="width:24px"></th>
+                  <th>Key</th><th>Value / File</th>
+                  <th style="width:64px">Type</th>
+                  <th style="width:24px"></th>
+                </tr></thead>
+                <tbody id="kv-form"></tbody>
+              </table>
+              <button class="add-row-btn" onclick="addFormRow()">+ Add Field</button>
             </div>
 
-            <div id="body-raw" style="display:none">
-              <select class="rfmt" id="rawfmt">
-                <option value="json">JSON</option>
-                <option value="xml">XML</option>
-                <option value="html">HTML</option>
-                <option value="text">Text</option>
-                <option value="javascript">JavaScript</option>
-              </select>
-              <textarea class="codea" id="coderaw" rows="9" placeholder='{"key": "value"}'></textarea>
+            <!-- x-www-form-urlencoded -->
+            <div id="body-urlenc" class="body-sub" style="display:none">
+              <table class="kv-tbl">
+                <thead><tr>
+                  <th style="width:24px"></th>
+                  <th>Key</th><th>Value</th><th>Description</th>
+                  <th style="width:24px"></th>
+                </tr></thead>
+                <tbody id="kv-urlenc"></tbody>
+              </table>
+              <button class="add-row-btn" onclick="addKVRow('urlenc')">+ Add Field</button>
             </div>
 
-            <div id="body-binary" style="display:none">
-              <input type="file" id="binfile" style="width:100%;padding:20px;background:var(--bg2);border:2px dashed var(--border);border-radius:var(--r);cursor:pointer;color:var(--t2)">
+            <!-- raw -->
+            <div id="body-raw" class="body-sub" style="display:none">
+              <div class="raw-toolbar">
+                <select id="raw-fmt" onchange="onRawFmtChange()">
+                  <option value="json">JSON</option>
+                  <option value="xml">XML</option>
+                  <option value="html">HTML</option>
+                  <option value="text">Text</option>
+                  <option value="javascript">JavaScript</option>
+                </select>
+                <button class="btn-s" onclick="beautifyRaw()">✨ Beautify</button>
+              </div>
+              <textarea class="code-area" id="code-raw" rows="10" placeholder='{"key": "value"}'
+                        spellcheck="false"></textarea>
             </div>
 
-            <div id="body-graphql" style="display:none">
-              <div style="display:grid;gap:10px">
-                <div>
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.5px;margin-bottom:5px">QUERY</div>
-                  <textarea class="codea" id="gqlq" rows="7" placeholder="query {\n  users {\n    id\n    name\n    email\n  }\n}"></textarea>
-                </div>
-                <div>
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.5px;margin-bottom:5px">VARIABLES (JSON)</div>
-                  <textarea class="codea" id="gqlv" rows="3" placeholder='{"userId": 1}'></textarea>
-                </div>
+            <!-- binary -->
+            <div id="body-binary" class="body-sub" style="display:none">
+              <div class="binary-drop" id="bin-drop"
+                   onclick="document.getElementById('bin-file').click()"
+                   ondragover="event.preventDefault();this.classList.add('dov')"
+                   ondragleave="this.classList.remove('dov')"
+                   ondrop="handleBinDrop(event)">
+                <input type="file" id="bin-file" style="display:none" onchange="showBinFile(this)">
+                <div id="bin-label">📁 Click to choose file  or  drag &amp; drop here</div>
               </div>
             </div>
 
-            <div id="body-grpc" style="display:none">
-              <div class="grpc-area">
-                <div class="grpc-field"><label>SERVICE URL</label><input type="text" id="grpc-url" placeholder="grpc://service.example.com:50051" style="width:100%"></div>
-                <div class="grpc-field"><label>METHOD</label><input type="text" id="grpc-method" placeholder="package.ServiceName/MethodName" style="width:100%"></div>
-                <div class="grpc-field"><label>REQUEST MESSAGE (JSON)</label><textarea id="grpc-body" rows="5" style="width:100%;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:10px;color:var(--t1);font-family:monospace;font-size:12px" placeholder='{"message": "Hello"}'></textarea></div>
-                <div style="margin-top:10px;padding:10px;background:var(--bg1);border-radius:var(--r)">
-                  <p style="font-size:11px;color:var(--t3)">Note: gRPC requires HTTP/2 and binary encoding (Protobuf). Browser-based gRPC is limited — use gRPC-Web proxy. For full gRPC support, use the desktop Postman app or grpcurl CLI.</p>
+            <!-- GraphQL -->
+            <div id="body-graphql" class="body-sub" style="display:none">
+              <div class="gql-wrap">
+                <div class="gql-block">
+                  <div class="field-label">QUERY</div>
+                  <textarea class="code-area" id="gql-q" rows="7" spellcheck="false"
+                    placeholder="query {\n  users { id name email }\n}"></textarea>
                 </div>
-                <button class="btn p" style="margin-top:10px" onclick="sendGRPC()">Send gRPC Request</button>
+                <div class="gql-block">
+                  <div class="field-label">VARIABLES (JSON)</div>
+                  <textarea class="code-area" id="gql-v" rows="4" spellcheck="false"
+                    placeholder='{"userId": 1}'></textarea>
+                </div>
               </div>
             </div>
+          </div><!-- /body panel -->
 
-          </div>
-
-          <!-- AUTH -->
-          <div class="reqtp tp" id="rp-auth">
-            <div style="margin-bottom:12px">
-              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.5px;margin-bottom:5px">AUTHORIZATION TYPE</div>
-              <select class="asel" id="authsel" onchange="renderAuthFields()">
+          <!-- ═══ AUTH ═══ -->
+          <div class="tpanel" id="rp-auth">
+            <div class="auth-type-row">
+              <div class="field-label">AUTH TYPE</div>
+              <select id="auth-sel" class="auth-type-sel" onchange="renderAuthFields()">
                 <option value="none">No Auth</option>
                 <option value="bearer">Bearer Token</option>
                 <option value="apikey">API Key</option>
@@ -211,163 +294,164 @@
                 <option value="digest">Digest Auth</option>
                 <option value="oauth1">OAuth 1.0</option>
                 <option value="oauth2">OAuth 2.0</option>
-                <option value="hawk">Hawk Authentication</option>
-                <option value="aws">AWS Signature</option>
-                <option value="ntlm">NTLM Authentication</option>
+                <option value="hawk">Hawk Auth</option>
+                <option value="aws">AWS Signature V4</option>
+                <option value="ntlm">NTLM</option>
               </select>
             </div>
-            <div id="authfields"></div>
+            <div id="auth-fields"></div>
           </div>
 
-          <!-- PRE-REQUEST SCRIPT -->
-          <div class="reqtp tp" id="rp-pre">
-            <textarea class="sarea" id="prescr" rows="9" placeholder="// Pre-request Script — runs BEFORE the request&#10;&#10;// Variables&#10;pm.environment.set('token', 'abc123');&#10;pm.globals.set('baseUrl', 'https://api.example.com');&#10;&#10;// Dynamic variables&#10;const timestamp = pm.variables.replaceIn('{{$timestamp}}');&#10;&#10;// Sub-request&#10;pm.sendRequest({ url: 'https://api.example.com/auth', method: 'POST' }, (err, res) => {&#10;  if (!err) pm.environment.set('authToken', res.json().token);&#10;});&#10;&#10;console.log('Ready to send!');"></textarea>
-            <div class="srefs">
-              <code>pm.environment.set(key, val)</code> · <code>pm.environment.get(key)</code> · <code>pm.globals.set(key, val)</code> · <code>pm.globals.get(key)</code><br>
-              <code>pm.variables.get(key)</code> · <code>pm.collectionVariables.set(key, val)</code> · <code>pm.sendRequest(opts, cb)</code> · <code>pm.info.requestId</code><br>
-              <code>console.log / warn / error / info()</code> · Dynamic: <code>{{$guid}}</code> <code>{{$timestamp}}</code> <code>{{$randomInt}}</code> <code>{{$randomEmail}}</code>
+          <!-- ═══ PRE-REQUEST SCRIPT ═══ -->
+          <div class="tpanel" id="rp-pre">
+            <textarea class="script-area" id="pre-script" rows="10" spellcheck="false"
+              placeholder="// Pre-request Script — runs BEFORE the request&#10;&#10;// Environment variables&#10;pm.environment.set('token', 'abc123');&#10;pm.environment.get('baseUrl');&#10;&#10;// Global variables&#10;pm.globals.set('apiKey', 'xyz');&#10;&#10;// Collection variables&#10;pm.collectionVariables.set('userId', '42');&#10;&#10;// Local variables (this request only)&#10;pm.variables.set('localVar', 'value');&#10;&#10;// Dynamic variables&#10;// pm.variables.set('ts', pm.variables.get('$timestamp'));&#10;&#10;// Sub-request&#10;// pm.sendRequest({ url: 'https://auth.example.com/token', method: 'POST',&#10;//   header: { 'Content-Type': 'application/json' },&#10;//   body: { mode: 'raw', raw: JSON.stringify({ client_id: 'x' }) }&#10;// }, (err, res) => { pm.environment.set('token', res.json().access_token); });&#10;&#10;// Logging&#10;console.log('pm.request.url:', pm.request.url.toString());"></textarea>
+            <div class="script-refs">
+              <strong>pm.environment</strong> .get/set/unset/has/clear/toObject() &nbsp;|&nbsp;
+              <strong>pm.globals</strong> .get/set/unset/has/clear() &nbsp;|&nbsp;
+              <strong>pm.collectionVariables</strong> .get/set/unset() &nbsp;|&nbsp;
+              <strong>pm.variables</strong> .get/set() &nbsp;|&nbsp;
+              <strong>pm.request</strong> .url / .method / .headers / .body &nbsp;|&nbsp;
+              <strong>pm.sendRequest</strong>(opts, cb) &nbsp;|&nbsp;
+              <strong>console</strong>.log/warn/error/info()
             </div>
           </div>
 
-          <!-- TEST SCRIPT -->
-          <div class="reqtp tp" id="rp-tests">
-            <textarea class="sarea" id="testscr" rows="9" placeholder="// Test Script — runs AFTER the response&#10;&#10;// Basic assertions&#10;pm.test('Status is 200', () => pm.response.to.have.status(200));&#10;pm.test('Response time under 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));&#10;&#10;// JSON body checks&#10;pm.test('Has data property', () => {&#10;  const json = pm.response.json();&#10;  pm.expect(json).to.have.property('data');&#10;  pm.expect(json.data).to.be.an('array');&#10;});&#10;&#10;// Set variable from response&#10;const token = pm.response.json().token;&#10;if (token) pm.environment.set('authToken', token);&#10;&#10;// Header check&#10;pm.test('Has Content-Type', () => pm.response.to.have.header('Content-Type'));"></textarea>
-            <div class="srefs">
-              <code>pm.test(name, fn)</code> · <code>pm.expect(val)</code> · <code>pm.response.json()</code> · <code>pm.response.text()</code> · <code>pm.response.code</code><br>
-              <code>pm.response.to.have.status(200)</code> · <code>pm.response.responseTime</code> · <code>pm.response.headers.get(key)</code><br>
-              <code>pm.expect(val).to.equal(x)</code> · <code>.to.include(x)</code> · <code>.to.have.property(p)</code> · <code>.to.be.below(n)</code> · <code>.to.be.an('array')</code>
+          <!-- ═══ TEST SCRIPT ═══ -->
+          <div class="tpanel" id="rp-tests">
+            <textarea class="script-area" id="test-script" rows="10" spellcheck="false"
+              placeholder="// Test Script — runs AFTER the response&#10;&#10;// Status checks&#10;pm.test('Status is 200', () =&gt; pm.response.to.have.status(200));&#10;pm.test('Success response', () =&gt; pm.response.to.be.ok);&#10;&#10;// Response time&#10;pm.test('Fast response', () =&gt; pm.expect(pm.response.responseTime).to.be.below(500));&#10;&#10;// Body checks&#10;pm.test('Has data property', () =&gt; {&#10;  const json = pm.response.json();&#10;  pm.expect(json).to.have.property('data');&#10;  pm.expect(json.data).to.be.an('array');&#10;});&#10;&#10;// Header checks&#10;pm.test('Content-Type is JSON', () =&gt; pm.response.to.have.header('content-type'));&#10;&#10;// JSON Schema validation&#10;// pm.test('Schema valid', () =&gt; pm.expect(pm.response.json()).to.matchSchema({&#10;//   type: 'object', required: ['id', 'name'],&#10;//   properties: { id: { type: 'number' }, name: { type: 'string' } }&#10;// }));&#10;&#10;// Set variable from response&#10;// pm.environment.set('token', pm.response.json().access_token);&#10;// pm.globals.set('userId', pm.response.json().id);&#10;&#10;// Chaining — store data for next request&#10;// pm.collectionVariables.set('lastCreatedId', pm.response.json().id);"></textarea>
+            <div class="script-refs">
+              <strong>pm.test</strong>(name, fn) &nbsp;|&nbsp;
+              <strong>pm.expect</strong>(val).to.equal / .include / .be.below / .have.property / .matchSchema() &nbsp;|&nbsp;
+              <strong>pm.response</strong>.json() / .text() / .code / .status / .responseTime / .headers.get(k) &nbsp;|&nbsp;
+              <strong>pm.response.to.have</strong>.status(200) / .header(k) / .jsonBody(path) &nbsp;|&nbsp;
+              <strong>pm.response.to.be</strong>.ok / .json / .success / .error
             </div>
           </div>
 
-          <!-- DESCRIPTION -->
-          <div class="reqtp tp" id="rp-docs">
-            <div style="margin-bottom:8px;font-size:12px;color:var(--t3)">Add a description for this request (supports plain text):</div>
-            <textarea id="req-desc" style="width:100%;min-height:140px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:11px;color:var(--t1);font-size:13px;line-height:1.7" placeholder="Describe this endpoint: what it does, parameters, expected response..."></textarea>
-          </div>
-
-          <!-- REQUEST SETTINGS -->
-          <div class="reqtp tp" id="rp-rsettings">
-            <div style="max-width:480px;display:grid;gap:8px">
-              <div class="srow">
-                <div><div class="slbl">Disable Body</div><div class="sdesc">Send request without body even if configured</div></div>
-                <label class="tog"><input type="checkbox" id="opt-nobody"><span class="tsl"></span></label>
+          <!-- ═══ REQUEST SETTINGS ═══ -->
+          <div class="tpanel" id="rp-rsettings">
+            <div class="rsettings-grid">
+              <div class="s-row">
+                <div>
+                  <div class="s-label">Follow Redirects</div>
+                  <div class="s-desc">Automatically follow HTTP 3xx redirects</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="opt-redirect" checked><span class="t-slider"></span></label>
               </div>
-              <div class="srow">
-                <div><div class="slbl">Inherit Auth from Collection</div><div class="sdesc">Use the collection-level authorization</div></div>
-                <label class="tog"><input type="checkbox" id="opt-inheritauth"><span class="tsl"></span></label>
+              <div class="s-row">
+                <div>
+                  <div class="s-label">Disable Body</div>
+                  <div class="s-desc">Send request without body even if body is configured</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="opt-nobody"><span class="t-slider"></span></label>
               </div>
-              <div style="margin-top:8px">
-                <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.5px;margin-bottom:5px">REQUEST TIMEOUT (ms, 0 = global)</div>
-                <input type="number" id="opt-timeout" value="0" min="0" style="width:150px">
+              <div class="s-row">
+                <div>
+                  <div class="s-label">Use Mock Response</div>
+                  <div class="s-desc">Intercept and return mock if a matching rule exists</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="opt-mock"><span class="t-slider"></span></label>
+              </div>
+              <div class="s-row">
+                <div>
+                  <div class="s-label">SSL Verification</div>
+                  <div class="s-desc">Verify SSL certificates (disable for self-signed)</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="opt-ssl" checked><span class="t-slider"></span></label>
+              </div>
+              <div style="margin-top:10px">
+                <div class="field-label">REQUEST TIMEOUT (ms)</div>
+                <input type="number" id="opt-timeout" value="30000" style="width:160px">
               </div>
             </div>
           </div>
 
-        </div>
-      </div>
+        </div><!-- /pcontent -->
+      </div><!-- /req-area -->
 
-      <!-- RESIZE -->
-      <div id="rizer"></div>
+      <!-- RESIZE HANDLE -->
+      <div id="resizer"></div>
 
-      <!-- RESPONSE AREA -->
-      <div id="resparea" style="flex:1;min-height:110px;">
-        <div id="rstat">
-          <span id="rpill" style="display:none" class="spill"></span>
-          <span id="rtime" class="stx" style="display:none"></span>
-          <span id="rsize" class="stx" style="display:none"></span>
-          <span id="rhint" style="color:var(--t3);font-size:12px">Hit Send to get a response</span>
-          <div id="racts" class="ract" style="display:none">
-            <button class="bs" onclick="copyResp()">📋 Copy</button>
-            <button class="bs" onclick="saveRespFile()">💾 Save</button>
+      <!-- ── RESPONSE AREA ── -->
+      <div id="resp-area">
+
+        <!-- Status bar -->
+        <div id="resp-status">
+          <span id="r-pill"  class="spill" style="display:none"></span>
+          <span id="r-time"  class="stat"  style="display:none"></span>
+          <span id="r-size"  class="stat"  style="display:none"></span>
+          <span id="r-hint">Hit Send to get a response</span>
+          <div  id="r-acts"  class="resp-acts" style="display:none">
+            <button class="btn-s" onclick="copyResponse()">📋 Copy</button>
+            <button class="btn-s" onclick="saveRespFile()">💾 Save</button>
           </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-          <div class="ptabs">
-            <div class="resptab ptab act" data-rs="rbody" onclick="switchRespPanel('rbody')">Body</div>
-            <div class="resptab ptab" data-rs="rhdrs" onclick="switchRespPanel('rhdrs')">Headers</div>
-            <div class="resptab ptab" data-rs="rcookies" onclick="switchRespPanel('rcookies')">Cookies</div>
-            <div class="resptab ptab" data-rs="rtests" onclick="switchRespPanel('rtests')">Test Results <span class="pbadge" id="tbadge" style="display:none">0</span></div>
-            <div class="resptab ptab" data-rs="rconsole" onclick="switchRespPanel('rconsole')">Console</div>
+        <!-- Response panel tabs -->
+        <div class="ptabs" id="resp-ptabs">
+          <div class="rptab ptab active" data-panel="rbody"    onclick="switchRespPanel('rbody')">Body</div>
+          <div class="rptab ptab"        data-panel="rhdrs"    onclick="switchRespPanel('rhdrs')">Headers</div>
+          <div class="rptab ptab"        data-panel="rcookies" onclick="switchRespPanel('rcookies')">Cookies</div>
+          <div class="rptab ptab"        data-panel="rtests"   onclick="switchRespPanel('rtests')">
+            Test Results <span class="pbadge" id="test-badge" style="display:none">0</span>
           </div>
-
-          <!-- BODY VIEW -->
-          <div class="rtpanel act" id="rs-rbody">
-            <div class="ptabs" style="background:var(--bg0)">
-              <div class="rbview ptab act" data-rb="pretty" onclick="switchRespBody('pretty')">Pretty</div>
-              <div class="rbview ptab" data-rb="raw" onclick="switchRespBody('raw')">Raw</div>
-              <div class="rbview ptab" data-rb="preview" onclick="switchRespBody('preview')">Preview</div>
-            </div>
-            <div class="rbwrap">
-              <div data-rbp="pretty" class="rbpanel act"><pre id="rpretty"></pre></div>
-              <div data-rbp="raw" class="rbpanel" style="display:none"><pre id="rraw"></pre></div>
-              <div data-rbp="preview" class="rbpanel" style="display:none;height:320px"><iframe id="rpreview" sandbox="allow-scripts allow-same-origin"></iframe></div>
-            </div>
-          </div>
-
-          <!-- HEADERS VIEW -->
-          <div class="rtpanel" id="rs-rhdrs">
-            <div class="pcont"><table class="rhtbl" id="rhdrtbl"></table></div>
-          </div>
-
-          <!-- COOKIES VIEW -->
-          <div class="rtpanel" id="rs-rcookies">
-            <div class="pcont" id="cookiepanel"></div>
-          </div>
-
-          <!-- TESTS VIEW -->
-          <div class="rtpanel" id="rs-rtests">
-            <div class="pcont" id="testout">
-              <div class="empty"><p>Write tests in the Tests tab, then send a request.</p></div>
-            </div>
-          </div>
-
-          <!-- CONSOLE VIEW -->
-          <div class="rtpanel" id="rs-rconsole" style="flex-direction:column">
-            <div style="padding:7px 12px;border-bottom:1px solid var(--border-lite);flex-shrink:0;display:flex;gap:8px;align-items:center">
-              <button class="bs" onclick="clearConsole()">Clear</button>
-              <span style="font-size:11px;color:var(--t3)">console.log() from scripts appears here</span>
-            </div>
-            <div id="consout" style="flex:1;overflow-y:auto"></div>
-          </div>
-
+          <div class="rptab ptab"        data-panel="rconsole" onclick="switchRespPanel('rconsole')">Console</div>
         </div>
-      </div>
 
-    </div>
-  </div>
-</div>
+        <!-- BODY panel -->
+        <div class="rtpanel active" id="rsp-rbody">
+          <div class="body-view-tabs ptabs">
+            <div class="rbview ptab active" data-view="pretty"  onclick="switchRespBody('pretty')">Pretty</div>
+            <div class="rbview ptab"        data-view="raw"     onclick="switchRespBody('raw')">Raw</div>
+            <div class="rbview ptab"        data-view="preview" onclick="switchRespBody('preview')">Preview</div>
+          </div>
+          <div class="resp-body-wrap">
+            <div id="rbp-pretty"  class="rbpanel active"><pre id="resp-pretty"></pre></div>
+            <div id="rbp-raw"     class="rbpanel"><pre id="resp-raw"></pre></div>
+            <div id="rbp-preview" class="rbpanel"><iframe id="resp-preview" sandbox="allow-scripts allow-same-origin"></iframe></div>
+          </div>
+        </div>
 
+        <!-- HEADERS panel -->
+        <div class="rtpanel" id="rsp-rhdrs">
+          <div class="pcontent"><table class="rh-tbl" id="r-headers-tbl"></table></div>
+        </div>
+
+        <!-- COOKIES panel -->
+        <div class="rtpanel" id="rsp-rcookies">
+          <div class="pcontent" id="cookies-out"></div>
+        </div>
+
+        <!-- TEST RESULTS panel -->
+        <div class="rtpanel" id="rsp-rtests">
+          <div class="pcontent" id="test-output">
+            <div class="empty-state">
+              <div class="ei">🧪</div>
+              <p>Write tests in the Tests tab above, then send a request.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONSOLE panel -->
+        <div class="rtpanel" id="rsp-rconsole">
+          <div class="console-toolbar">
+            <button class="btn-s" onclick="clearConsole()">🗑 Clear</button>
+          </div>
+          <div id="console-out"></div>
+        </div>
+
+      </div><!-- /resp-area -->
+    </div><!-- /split -->
+  </div><!-- /workspace -->
+</div><!-- /main -->
+
+<!-- Toast notifications -->
 <div id="notifs"></div>
+<!-- Modal container -->
 <div id="modals"></div>
 
 <script src="app.js"></script>
-<script>
-// gRPC stub
-function sendGRPC() {
-  const url = document.getElementById('grpc-url')?.value;
-  const method = document.getElementById('grpc-method')?.value;
-  if (!url || !method) { notify('Enter gRPC URL and method', 'error'); return; }
-  notify('gRPC in browsers requires gRPC-Web. Redirecting to full request with Content-Type: application/grpc...', 'info');
-  // Fallback: treat as HTTP/2 POST
-  document.getElementById('msel').value = 'POST';
-  document.getElementById('urlin').value = url + '/' + method;
-  setBodyType('raw');
-  const body = document.getElementById('grpc-body')?.value || '{}';
-  document.getElementById('coderaw').value = body;
-  document.getElementById('rawfmt').value = 'json';
-  // Set gRPC headers
-  const tab = getTab();
-  if (tab) {
-    tab.headers = [
-      { id: uid(), on: true, k: 'Content-Type', v: 'application/grpc+json', desc: '' },
-      { id: uid(), on: true, k: 'TE', v: 'trailers', desc: '' },
-    ];
-    loadKV('headers', tab.headers);
-  }
-  colorMethod();
-  sendRequest();
-}
-</script>
 </body>
 </html>
