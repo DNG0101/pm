@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<!-- ═══ TOPBAR ═══════════════════════════════════════════ -->
+<!-- ═══ TOPBAR ═══════════════════════════════════════════════ -->
 <div id="topbar">
   <div class="logo">
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
@@ -31,11 +31,9 @@
 
   <div class="topbar-right">
     <button id="cors-btn" onclick="toggleCORS()" title="Toggle CORS Proxy">⚡ CORS: OFF</button>
-
     <select id="env-quick" class="env-quick-sel" onchange="quickEnvSwitch(this.value)" title="Active Environment">
       <option value="">No Environment</option>
     </select>
-
     <button class="btn-topbar" onclick="openGRPC()"       title="gRPC Client">gRPC</button>
     <button class="btn-topbar" onclick="openWS()"         title="WebSocket">🔌 WS</button>
     <button class="btn-topbar" onclick="openMockServer()" title="Mock Server">🎭 Mock</button>
@@ -45,10 +43,10 @@
   </div>
 </div>
 
-<!-- ═══ MAIN ══════════════════════════════════════════════ -->
+<!-- ═══ MAIN ════════════════════════════════════════════════ -->
 <div id="main">
 
-  <!-- ─── SIDEBAR ──────────────────────────────────── -->
+  <!-- ─── SIDEBAR ──────────────────────────────────────── -->
   <div id="sidebar">
     <div class="sb-tabs">
       <div class="sb-tab active" data-sb="colls"   onclick="switchSB('colls')">COLLS</div>
@@ -69,9 +67,7 @@
       <div class="sb-list" id="coll-list"></div>
     </div>
 
-    <!-- HISTORY
-         NOTE: All click events handled via JS event delegation (initHistoryEvents)
-         No inline onclick handlers on rows/buttons — this prevents event bubbling bugs -->
+    <!-- HISTORY -->
     <div class="sb-panel" id="sbp-history">
       <div class="hist-header">
         <div class="hist-rec-row">
@@ -86,10 +82,10 @@
         </div>
         <div class="sb-actions" style="margin-top:4px">
           <button class="btn-s danger" onclick="clearHistory()">🗑 Clear All</button>
-          <button class="btn-s"        id="btn-unpin-all" onclick="unpinAllHistory()">📌 Unpin All</button>
+          <button class="btn-s"        onclick="unpinAllHistory()">📌 Unpin All</button>
         </div>
       </div>
-      <!-- History rows rendered by JS; events delegated via initHistoryEvents() -->
+      <!-- All events delegated via initHistoryEvents() in app.js -->
       <div class="sb-list" id="hist-list"></div>
     </div>
 
@@ -103,7 +99,7 @@
     </div>
   </div>
 
-  <!-- ─── WORKSPACE ────────────────────────────────── -->
+  <!-- ─── WORKSPACE ─────────────────────────────────────── -->
   <div id="workspace">
 
     <!-- URL BAR -->
@@ -120,7 +116,6 @@
         <option value="OPTIONS">OPTIONS</option>
       </select>
 
-      <!-- url-wrap: positions the DIRECT badge inside the input area -->
       <div class="url-wrap">
         <input id="url-in" type="text"
           placeholder="https://api.example.com  •  http://10.x.x.x:port  •  {{variable}}  •  :pathVar"
@@ -139,7 +134,6 @@
 
       <!-- REQUEST AREA -->
       <div id="req-area">
-
         <div class="ptabs" id="req-ptabs">
           <div class="ptab active" data-panel="params"    onclick="switchReqPanel('params')">Params</div>
           <div class="ptab"        data-panel="pathvars"  onclick="switchReqPanel('pathvars')">Path Variables</div>
@@ -165,15 +159,12 @@
 
           <!-- PATH VARIABLES -->
           <div class="tpanel" id="rp-pathvars">
-            <div class="pv-hint">
-              Auto-extracted from <code>/:param</code> or <code>/{param}</code> in the URL.
-              Values support <code>{{variable}}</code> syntax.
-            </div>
+            <div class="pv-hint">Auto-extracted from <code>/:param</code> or <code>/{param}</code>. Supports <code>{{variable}}</code>.</div>
             <table class="kv-tbl">
               <thead><tr><th>Variable</th><th>Value</th><th>Description</th><th class="col-del"></th></tr></thead>
               <tbody id="kv-pathvars"></tbody>
             </table>
-            <div id="pv-empty" class="pv-empty">No path variables detected. Add <code>:param</code> or <code>{param}</code> to the URL.</div>
+            <div id="pv-empty" class="pv-empty">No path variables detected.</div>
           </div>
 
           <!-- HEADERS -->
@@ -195,11 +186,7 @@
               <button class="btype-btn"        data-type="binary"  onclick="setBody('binary')">binary</button>
               <button class="btype-btn"        data-type="graphql" onclick="setBody('graphql')">GraphQL</button>
             </div>
-
-            <div id="body-none" class="body-sub">
-              <p class="muted-msg">No body will be sent with this request.</p>
-            </div>
-
+            <div id="body-none" class="body-sub"><p class="muted-msg">No body will be sent with this request.</p></div>
             <div id="body-form" class="body-sub" style="display:none">
               <table class="kv-tbl">
                 <thead><tr><th class="col-chk"></th><th>Key</th><th>Value / File</th><th class="col-type">Type</th><th class="col-del"></th></tr></thead>
@@ -207,7 +194,6 @@
               </table>
               <button class="add-row-btn" onclick="addFormRow()">+ Add Field</button>
             </div>
-
             <div id="body-urlenc" class="body-sub" style="display:none">
               <table class="kv-tbl">
                 <thead><tr><th class="col-chk"></th><th>Key</th><th>Value</th><th>Description</th><th class="col-del"></th></tr></thead>
@@ -215,7 +201,6 @@
               </table>
               <button class="add-row-btn" onclick="addKVRow('urlenc')">+ Add Field</button>
             </div>
-
             <div id="body-raw" class="body-sub" style="display:none">
               <div class="raw-toolbar">
                 <select id="raw-fmt" onchange="onRawFmtChange()">
@@ -227,10 +212,8 @@
                 </select>
                 <button class="btn-s" onclick="beautifyRaw()">✨ Beautify</button>
               </div>
-              <textarea class="code-area" id="code-raw" rows="10"
-                        placeholder='{"key": "value"}' spellcheck="false"></textarea>
+              <textarea class="code-area" id="code-raw" rows="10" placeholder='{"key": "value"}' spellcheck="false"></textarea>
             </div>
-
             <div id="body-binary" class="body-sub" style="display:none">
               <div class="binary-drop" id="bin-drop"
                    onclick="document.getElementById('bin-file').click()"
@@ -238,21 +221,18 @@
                    ondragleave="this.classList.remove('dov')"
                    ondrop="handleBinDrop(event)">
                 <input type="file" id="bin-file" style="display:none" onchange="showBinFile(this)">
-                <div id="bin-label">📁 Click to choose file or drag &amp; drop here</div>
+                <div id="bin-label">📁 Click to choose file or drag &amp; drop</div>
               </div>
             </div>
-
             <div id="body-graphql" class="body-sub" style="display:none">
               <div class="gql-wrap">
                 <div>
                   <div class="field-label">QUERY</div>
-                  <textarea class="code-area" id="gql-q" rows="7" spellcheck="false"
-                    placeholder="query {\n  users { id name email }\n}"></textarea>
+                  <textarea class="code-area" id="gql-q" rows="7" spellcheck="false" placeholder="query {\n  users { id name email }\n}"></textarea>
                 </div>
                 <div>
                   <div class="field-label">VARIABLES (JSON)</div>
-                  <textarea class="code-area" id="gql-v" rows="4" spellcheck="false"
-                    placeholder='{"userId": 1}'></textarea>
+                  <textarea class="code-area" id="gql-v" rows="4" spellcheck="false" placeholder='{"userId": 1}'></textarea>
                 </div>
               </div>
             </div>
@@ -281,7 +261,7 @@
           <!-- PRE-REQUEST SCRIPT -->
           <div class="tpanel" id="rp-pre">
             <textarea class="script-area" id="pre-script" rows="10" spellcheck="false"
-              placeholder="// Pre-request Script — runs BEFORE the request&#10;&#10;// Set environment variable&#10;pm.environment.set('token', 'abc123');&#10;pm.globals.set('apiKey', 'xyz');&#10;pm.collectionVariables.set('userId', '42');&#10;pm.variables.set('localVar', 'value');&#10;&#10;// Sub-request to get auth token&#10;// pm.sendRequest({&#10;//   url: 'https://auth.example.com/token',&#10;//   method: 'POST',&#10;//   header: { 'Content-Type': 'application/json' },&#10;//   body: { mode: 'raw', raw: JSON.stringify({ client_id: 'x' }) }&#10;// }, (err, res) => {&#10;//   pm.environment.set('token', res.json().access_token);&#10;// });&#10;&#10;console.log('URL:', pm.request.url.toString());"></textarea>
+              placeholder="// Pre-request Script&#10;pm.environment.set('token', 'abc123');&#10;pm.globals.set('apiKey', 'xyz');&#10;console.log('URL:', pm.request.url.toString());"></textarea>
             <div class="script-refs">
               <b>pm.environment</b>.get/set/unset/has/clear() &nbsp;|&nbsp;
               <b>pm.globals</b>.get/set/unset/has() &nbsp;|&nbsp;
@@ -296,11 +276,11 @@
           <!-- TEST SCRIPT -->
           <div class="tpanel" id="rp-tests">
             <textarea class="script-area" id="test-script" rows="10" spellcheck="false"
-              placeholder="// Test Script — runs AFTER the response&#10;&#10;pm.test('Status is 200', () =&gt; pm.response.to.have.status(200));&#10;pm.test('Fast response', () =&gt; pm.expect(pm.response.responseTime).to.be.below(1000));&#10;pm.test('Has data', () =&gt; {&#10;  const json = pm.response.json();&#10;  pm.expect(json).to.have.property('data');&#10;});&#10;&#10;// JSON schema validation&#10;// pm.test('Schema ok', () =&gt; pm.expect(pm.response.json()).to.matchSchema({&#10;//   type: 'object', required: ['id']&#10;// }));&#10;&#10;// Set variable from response&#10;// pm.environment.set('token', pm.response.json().access_token);&#10;// pm.collectionVariables.set('lastId', pm.response.json().id);"></textarea>
+              placeholder="// Test Script&#10;pm.test('Status is 200', () =&gt; pm.response.to.have.status(200));&#10;pm.test('Fast', () =&gt; pm.expect(pm.response.responseTime).to.be.below(1000));&#10;pm.test('Has data', () =&gt; pm.expect(pm.response.json()).to.have.property('data'));"></textarea>
             <div class="script-refs">
               <b>pm.test</b>(name, fn) &nbsp;|&nbsp;
               <b>pm.expect</b>(val).to.equal/.include/.be.below/.have.property/.matchSchema() &nbsp;|&nbsp;
-              <b>pm.response</b>.json()/.text()/.code/.status/.responseTime &nbsp;|&nbsp;
+              <b>pm.response</b>.json()/.text()/.code/.responseTime &nbsp;|&nbsp;
               <b>pm.response.to.have</b>.status(200)/.header(k) &nbsp;|&nbsp;
               <b>pm.response.to.be</b>.ok/.json/.success/.error
             </div>
@@ -310,24 +290,15 @@
           <div class="tpanel" id="rp-rsettings">
             <div class="rsettings-grid">
               <div class="s-row">
-                <div>
-                  <div class="s-label">Follow Redirects</div>
-                  <div class="s-desc">Automatically follow HTTP 3xx redirects</div>
-                </div>
+                <div><div class="s-label">Follow Redirects</div><div class="s-desc">Automatically follow HTTP 3xx redirects</div></div>
                 <label class="toggle"><input type="checkbox" id="opt-redirect" checked><span class="t-slider"></span></label>
               </div>
               <div class="s-row">
-                <div>
-                  <div class="s-label">Disable Body</div>
-                  <div class="s-desc">Send request without body even if body is configured</div>
-                </div>
+                <div><div class="s-label">Disable Body</div><div class="s-desc">Send request without body even if configured</div></div>
                 <label class="toggle"><input type="checkbox" id="opt-nobody"><span class="t-slider"></span></label>
               </div>
               <div class="s-row">
-                <div>
-                  <div class="s-label">Use Mock Response</div>
-                  <div class="s-desc">Return mock if a matching rule exists (set in Mock Server)</div>
-                </div>
+                <div><div class="s-label">Use Mock Response</div><div class="s-desc">Return mock if a matching rule exists</div></div>
                 <label class="toggle"><input type="checkbox" id="opt-mock"><span class="t-slider"></span></label>
               </div>
               <div style="margin-top:10px">
@@ -345,17 +316,21 @@
       <!-- RESPONSE AREA -->
       <div id="resp-area">
 
+        <!-- Status bar with ENLARGE button -->
         <div id="resp-status">
           <span id="r-pill"  class="spill" style="display:none"></span>
           <span id="r-time"  class="stat"  style="display:none"></span>
           <span id="r-size"  class="stat"  style="display:none"></span>
           <span id="r-hint">Hit Send to get a response</span>
-          <div  id="r-acts"  class="resp-acts" style="display:none">
-            <button class="btn-s" onclick="copyResponse()">📋 Copy</button>
-            <button class="btn-s" onclick="saveRespFile()">💾 Save</button>
+          <div id="r-acts" class="resp-acts" style="display:none">
+            <button class="btn-s" onclick="copyResponse()"   title="Copy response body">📋 Copy</button>
+            <button class="btn-s" onclick="saveRespFile()"   title="Save to file">💾 Save</button>
+            <!-- ENLARGE: opens full-screen body overlay -->
+            <button class="btn-s" onclick="openEnlargeResp()" title="Enlarge response (full screen)">⛶ Enlarge</button>
           </div>
         </div>
 
+        <!-- Response panel tabs -->
         <div class="ptabs" id="resp-ptabs">
           <div class="rptab ptab active" data-panel="rbody"    onclick="switchRespPanel('rbody')">Body</div>
           <div class="rptab ptab"        data-panel="rhdrs"    onclick="switchRespPanel('rhdrs')">Headers</div>
@@ -366,43 +341,60 @@
           <div class="rptab ptab"        data-panel="rconsole" onclick="switchRespPanel('rconsole')">Console</div>
         </div>
 
+        <!-- BODY panel -->
         <div class="rtpanel active" id="rsp-rbody">
-          <div class="ptabs body-view-tabs">
-            <div class="rbview ptab active" data-view="pretty"  onclick="switchRespBody('pretty')">Pretty</div>
-            <div class="rbview ptab"        data-view="raw"     onclick="switchRespBody('raw')">Raw</div>
-            <div class="rbview ptab"        data-view="preview" onclick="switchRespBody('preview')">Preview</div>
+          <!-- Body view sub-tabs + per-panel enlarge -->
+          <div class="body-toolbar">
+            <div class="ptabs body-view-tabs" style="border-bottom:none;padding:0;background:transparent">
+              <div class="rbview ptab active" data-view="pretty"  onclick="switchRespBody('pretty')">Pretty</div>
+              <div class="rbview ptab"        data-view="raw"     onclick="switchRespBody('raw')">Raw</div>
+              <div class="rbview ptab"        data-view="preview" onclick="switchRespBody('preview')">Preview</div>
+            </div>
+            <button class="btn-enlarge-panel" onclick="openEnlargeResp()" title="Full screen">⛶</button>
           </div>
           <div class="resp-body-wrap">
             <div id="rbp-pretty"  class="rbpanel active"><pre id="resp-pretty"></pre></div>
             <div id="rbp-raw"     class="rbpanel"><pre id="resp-raw"></pre></div>
+            <!-- Preview iframe — sandbox allows scripts for proper HTML rendering -->
             <div id="rbp-preview" class="rbpanel">
-              <iframe id="resp-preview" sandbox="allow-scripts allow-same-origin"></iframe>
+              <iframe id="resp-preview"
+                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                      referrerpolicy="no-referrer"></iframe>
             </div>
           </div>
         </div>
 
+        <!-- HEADERS panel -->
         <div class="rtpanel" id="rsp-rhdrs">
-          <div class="pcontent">
-            <table class="rh-tbl" id="r-headers-tbl"></table>
+          <div class="panel-toolbar">
+            <button class="btn-enlarge-panel" onclick="openEnlargePanel('headers')" title="Full screen">⛶</button>
           </div>
+          <div class="pcontent"><table class="rh-tbl" id="r-headers-tbl"></table></div>
         </div>
 
+        <!-- COOKIES panel -->
         <div class="rtpanel" id="rsp-rcookies">
+          <div class="panel-toolbar">
+            <button class="btn-enlarge-panel" onclick="openEnlargePanel('cookies')" title="Full screen">⛶</button>
+          </div>
           <div class="pcontent" id="cookies-out"></div>
         </div>
 
+        <!-- TEST RESULTS panel -->
         <div class="rtpanel" id="rsp-rtests">
+          <div class="panel-toolbar">
+            <button class="btn-enlarge-panel" onclick="openEnlargePanel('tests')" title="Full screen">⛶</button>
+          </div>
           <div class="pcontent" id="test-output">
-            <div class="empty-state">
-              <div class="ei">🧪</div>
-              <p>Write tests in the Tests tab, then send a request.</p>
-            </div>
+            <div class="empty-state"><div class="ei">🧪</div><p>Write tests in the Tests tab, then send a request.</p></div>
           </div>
         </div>
 
+        <!-- CONSOLE panel -->
         <div class="rtpanel" id="rsp-rconsole">
           <div class="console-toolbar">
             <button class="btn-s" onclick="clearConsole()">🗑 Clear</button>
+            <button class="btn-enlarge-panel" onclick="openEnlargePanel('console')" title="Full screen" style="margin-left:auto">⛶</button>
           </div>
           <div id="console-out"></div>
         </div>
@@ -411,6 +403,48 @@
     </div><!-- /split -->
   </div><!-- /workspace -->
 </div><!-- /main -->
+
+<!-- ═══ FULLSCREEN OVERLAY (Enlarge Body / Panel) ══════════ -->
+<!-- Used by openEnlargeResp() and openEnlargePanel() in app.js -->
+<div id="fs-overlay" class="fs-overlay" style="display:none">
+  <div class="fs-header">
+    <div class="fs-title" id="fs-title">Response Body</div>
+    <div class="fs-toolbar" id="fs-toolbar">
+      <!-- sub-tabs injected here for body view -->
+    </div>
+    <div class="fs-acts">
+      <button class="btn-s" id="fs-copy-btn"  onclick="fsAction('copy')">📋 Copy</button>
+      <button class="btn-s" id="fs-save-btn"  onclick="fsAction('save')">💾 Save</button>
+      <button class="btn-s danger" onclick="closeEnlarge()" title="Close (Esc)">✕ Close</button>
+    </div>
+  </div>
+  <div class="fs-body" id="fs-body">
+    <!-- content injected by JS -->
+  </div>
+</div>
+
+<!-- ═══ ADVANCED REPEAT POPOVER ════════════════════════════ -->
+<!-- Shown near history row when user clicks Adv button -->
+<div id="adv-popover" class="adv-popover" style="display:none">
+  <div class="adv-title">Advanced Repeat</div>
+  <div class="adv-row">
+    <label>Repeat count</label>
+    <input type="number" id="adv-count" value="5" min="1" max="500" style="width:70px">
+  </div>
+  <div class="adv-row">
+    <label>Delay (ms)</label>
+    <input type="number" id="adv-delay" value="0" min="0" style="width:70px">
+  </div>
+  <div class="adv-progress-wrap" id="adv-pw" style="display:none">
+    <div class="adv-progress-bar" id="adv-pb"></div>
+    <div class="adv-progress-txt" id="adv-pt">0 / 0</div>
+  </div>
+  <div id="adv-results" class="adv-results"></div>
+  <div class="adv-btns">
+    <button class="btn-s" onclick="closeAdvPopover()">Close</button>
+    <button class="btn primary" id="adv-run-btn" onclick="runAdvRepeat()">▶ Run</button>
+  </div>
+</div>
 
 <div id="notifs"></div>
 <div id="modals"></div>
