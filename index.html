@@ -85,7 +85,6 @@
           <button class="btn-s"        onclick="unpinAllHistory()">📌 Unpin All</button>
         </div>
       </div>
-      <!-- All events delegated via initHistoryEvents() in app.js -->
       <div class="sb-list" id="hist-list"></div>
     </div>
 
@@ -316,17 +315,17 @@
       <!-- RESPONSE AREA -->
       <div id="resp-area">
 
-        <!-- Status bar with ENLARGE button -->
+        <!-- Status bar -->
         <div id="resp-status">
           <span id="r-pill"  class="spill" style="display:none"></span>
           <span id="r-time"  class="stat"  style="display:none"></span>
           <span id="r-size"  class="stat"  style="display:none"></span>
           <span id="r-hint">Hit Send to get a response</span>
           <div id="r-acts" class="resp-acts" style="display:none">
-            <button class="btn-s" onclick="copyResponse()"   title="Copy response body">📋 Copy</button>
-            <button class="btn-s" onclick="saveRespFile()"   title="Save to file">💾 Save</button>
-            <!-- ENLARGE: opens full-screen body overlay -->
-            <button class="btn-s" onclick="openEnlargeResp()" title="Enlarge response (full screen)">⛶ Enlarge</button>
+            <button class="btn-s" onclick="copyResponse()"     title="Copy response body">📋 Copy</button>
+            <button class="btn-s" onclick="saveRespFile()"     title="Save to file">💾 Save</button>
+            <button class="btn-s" id="r-download-btn" onclick="downloadBinaryResp()" title="Download binary" style="display:none">⬇ Download</button>
+            <button class="btn-s" onclick="openEnlargeResp()"  title="Enlarge response (full screen)">⛶ Enlarge</button>
           </div>
         </div>
 
@@ -343,19 +342,19 @@
 
         <!-- BODY panel -->
         <div class="rtpanel active" id="rsp-rbody">
-          <!-- Body view sub-tabs + per-panel enlarge -->
           <div class="body-toolbar">
             <div class="ptabs body-view-tabs" style="border-bottom:none;padding:0;background:transparent">
               <div class="rbview ptab active" data-view="pretty"  onclick="switchRespBody('pretty')">Pretty</div>
               <div class="rbview ptab"        data-view="raw"     onclick="switchRespBody('raw')">Raw</div>
               <div class="rbview ptab"        data-view="preview" onclick="switchRespBody('preview')">Preview</div>
             </div>
+            <!-- Content-type badge -->
+            <span id="resp-ct-badge" class="resp-ct-badge" style="display:none"></span>
             <button class="btn-enlarge-panel" onclick="openEnlargeResp()" title="Full screen">⛶</button>
           </div>
           <div class="resp-body-wrap">
             <div id="rbp-pretty"  class="rbpanel active"><pre id="resp-pretty"></pre></div>
             <div id="rbp-raw"     class="rbpanel"><pre id="resp-raw"></pre></div>
-            <!-- Preview iframe — sandbox allows scripts for proper HTML rendering -->
             <div id="rbp-preview" class="rbpanel">
               <iframe id="resp-preview"
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
@@ -404,27 +403,21 @@
   </div><!-- /workspace -->
 </div><!-- /main -->
 
-<!-- ═══ FULLSCREEN OVERLAY (Enlarge Body / Panel) ══════════ -->
-<!-- Used by openEnlargeResp() and openEnlargePanel() in app.js -->
+<!-- ═══ FULLSCREEN OVERLAY ══════════════════════════════════ -->
 <div id="fs-overlay" class="fs-overlay" style="display:none">
   <div class="fs-header">
     <div class="fs-title" id="fs-title">Response Body</div>
-    <div class="fs-toolbar" id="fs-toolbar">
-      <!-- sub-tabs injected here for body view -->
-    </div>
+    <div class="fs-toolbar" id="fs-toolbar"></div>
     <div class="fs-acts">
       <button class="btn-s" id="fs-copy-btn"  onclick="fsAction('copy')">📋 Copy</button>
       <button class="btn-s" id="fs-save-btn"  onclick="fsAction('save')">💾 Save</button>
       <button class="btn-s danger" onclick="closeEnlarge()" title="Close (Esc)">✕ Close</button>
     </div>
   </div>
-  <div class="fs-body" id="fs-body">
-    <!-- content injected by JS -->
-  </div>
+  <div class="fs-body" id="fs-body"></div>
 </div>
 
 <!-- ═══ ADVANCED REPEAT POPOVER ════════════════════════════ -->
-<!-- Shown near history row when user clicks Adv button -->
 <div id="adv-popover" class="adv-popover" style="display:none">
   <div class="adv-title">Advanced Repeat</div>
   <div class="adv-row">
@@ -449,6 +442,8 @@
 <div id="notifs"></div>
 <div id="modals"></div>
 
-<script src="app.js"></script>
+<!-- Split JS into two modules for manageability -->
+<script src="app1.js"></script>
+<script src="app2.js"></script>
 </body>
 </html>
