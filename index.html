@@ -20,15 +20,12 @@
     </svg>
     PostmanWeb
   </div>
-
   <div class="ws-bar">
     <select id="ws-sel" onchange="switchWorkspace(this.value)" title="Switch Workspace"></select>
     <button class="btn-topbar" onclick="openNewWorkspace()" title="New Workspace">＋</button>
   </div>
-
   <div id="tabs"></div>
   <button id="btn-new-tab" onclick="newTab()" title="New Tab (Ctrl+T)">＋</button>
-
   <div class="topbar-right">
     <button id="cors-btn" onclick="toggleCORS()" title="Toggle CORS Proxy">⚡ CORS: OFF</button>
     <select id="env-quick" class="env-quick-sel" onchange="quickEnvSwitch(this.value)" title="Active Environment">
@@ -50,8 +47,8 @@
   <div id="sidebar">
     <div class="sb-tabs">
       <div class="sb-tab active" data-sb="colls"   onclick="switchSB('colls')">COLLS</div>
-      <div class="sb-tab"        data-sb="history" onclick="switchSB('history')">HISTORY</div>
-      <div class="sb-tab"        data-sb="envs"    onclick="switchSB('envs')">ENVS</div>
+      <div class="sb-tab"       data-sb="history"  onclick="switchSB('history')">HISTORY</div>
+      <div class="sb-tab"       data-sb="envs"     onclick="switchSB('envs')">ENVS</div>
     </div>
 
     <!-- COLLECTIONS -->
@@ -104,7 +101,6 @@
     <!-- URL BAR -->
     <div id="urlbar">
       <button class="btn-icon-url" onclick="toggleSB()" title="Toggle Sidebar (Ctrl+\)">☰</button>
-
       <select id="method-sel" onchange="colorMethod()">
         <option value="GET">GET</option>
         <option value="POST">POST</option>
@@ -114,7 +110,6 @@
         <option value="HEAD">HEAD</option>
         <option value="OPTIONS">OPTIONS</option>
       </select>
-
       <div class="url-wrap">
         <input id="url-in" type="text"
           placeholder="https://api.example.com  •  http://10.x.x.x:port  •  {{variable}}  •  :pathVar"
@@ -122,7 +117,6 @@
         <span id="direct-badge" class="direct-badge"
               title="Private/internal IP — sent DIRECTLY (no proxy)">DIRECT</span>
       </div>
-
       <button id="save-btn"   onclick="saveToCollection()" title="Save (Ctrl+S)">💾 Save</button>
       <button id="cancel-btn" onclick="cancelReq()"        style="display:none" title="Cancel (Esc)">✕ Cancel</button>
       <button id="send-btn"   onclick="sendRequest()"      title="Send (Ctrl+Enter)">Send ➤</button>
@@ -185,8 +179,8 @@
               <button class="btype-btn"        data-type="binary"  onclick="setBody('binary')">binary</button>
               <button class="btype-btn"        data-type="graphql" onclick="setBody('graphql')">GraphQL</button>
             </div>
-            <div id="body-none" class="body-sub"><p class="muted-msg">No body will be sent with this request.</p></div>
-            <div id="body-form" class="body-sub" style="display:none">
+            <div id="body-none"    class="body-sub"><p class="muted-msg">No body will be sent with this request.</p></div>
+            <div id="body-form"    class="body-sub" style="display:none">
               <table class="kv-tbl">
                 <thead><tr><th class="col-chk"></th><th>Key</th><th>Value / File</th><th class="col-type">Type</th><th class="col-del"></th></tr></thead>
                 <tbody id="kv-form"></tbody>
@@ -200,7 +194,7 @@
               </table>
               <button class="add-row-btn" onclick="addKVRow('urlenc')">+ Add Field</button>
             </div>
-            <div id="body-raw" class="body-sub" style="display:none">
+            <div id="body-raw"    class="body-sub" style="display:none">
               <div class="raw-toolbar">
                 <select id="raw-fmt" onchange="onRawFmtChange()">
                   <option value="json">JSON</option>
@@ -227,7 +221,7 @@
               <div class="gql-wrap">
                 <div>
                   <div class="field-label">QUERY</div>
-                  <textarea class="code-area" id="gql-q" rows="7" spellcheck="false" placeholder="query {\n  users { id name email }\n}"></textarea>
+                  <textarea class="code-area" id="gql-q" rows="7" spellcheck="false" placeholder="query {&#10;  users { id name email }&#10;}"></textarea>
                 </div>
                 <div>
                   <div class="field-label">VARIABLES (JSON)</div>
@@ -314,22 +308,19 @@
 
       <!-- RESPONSE AREA -->
       <div id="resp-area">
-
-        <!-- Status bar -->
         <div id="resp-status">
           <span id="r-pill"  class="spill" style="display:none"></span>
           <span id="r-time"  class="stat"  style="display:none"></span>
           <span id="r-size"  class="stat"  style="display:none"></span>
           <span id="r-hint">Hit Send to get a response</span>
           <div id="r-acts" class="resp-acts" style="display:none">
-            <button class="btn-s" onclick="copyResponse()"     title="Copy response body">📋 Copy</button>
-            <button class="btn-s" onclick="saveRespFile()"     title="Save to file">💾 Save</button>
-            <button class="btn-s" id="r-download-btn" onclick="downloadBinaryResp()" title="Download binary" style="display:none">⬇ Download</button>
-            <button class="btn-s" onclick="openEnlargeResp()"  title="Enlarge response (full screen)">⛶ Enlarge</button>
+            <button class="btn-s" onclick="copyResponse()"    title="Copy response body">📋 Copy</button>
+            <button class="btn-s" onclick="saveRespFile()"    title="Save to file">💾 Save</button>
+            <button class="btn-s" id="r-download-btn" onclick="downloadBinaryResp()" style="display:none" title="Download binary">⬇ Download</button>
+            <button class="btn-s" onclick="openEnlargeResp()" title="Enlarge response">⛶ Enlarge</button>
           </div>
         </div>
 
-        <!-- Response panel tabs -->
         <div class="ptabs" id="resp-ptabs">
           <div class="rptab ptab active" data-panel="rbody"    onclick="switchRespPanel('rbody')">Body</div>
           <div class="rptab ptab"        data-panel="rhdrs"    onclick="switchRespPanel('rhdrs')">Headers</div>
@@ -337,10 +328,9 @@
           <div class="rptab ptab"        data-panel="rtests"   onclick="switchRespPanel('rtests')">
             Test Results <span class="pbadge" id="test-badge" style="display:none">0</span>
           </div>
-          <div class="rptab ptab"        data-panel="rconsole" onclick="switchRespPanel('rconsole')">Console</div>
+          <div class="rptab ptab" data-panel="rconsole" onclick="switchRespPanel('rconsole')">Console</div>
         </div>
 
-        <!-- BODY panel -->
         <div class="rtpanel active" id="rsp-rbody">
           <div class="body-toolbar">
             <div class="ptabs body-view-tabs" style="border-bottom:none;padding:0;background:transparent">
@@ -348,7 +338,6 @@
               <div class="rbview ptab"        data-view="raw"     onclick="switchRespBody('raw')">Raw</div>
               <div class="rbview ptab"        data-view="preview" onclick="switchRespBody('preview')">Preview</div>
             </div>
-            <!-- Content-type badge -->
             <span id="resp-ct-badge" class="resp-ct-badge" style="display:none"></span>
             <button class="btn-enlarge-panel" onclick="openEnlargeResp()" title="Full screen">⛶</button>
           </div>
@@ -357,13 +346,12 @@
             <div id="rbp-raw"     class="rbpanel"><pre id="resp-raw"></pre></div>
             <div id="rbp-preview" class="rbpanel">
               <iframe id="resp-preview"
-                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                      referrerpolicy="no-referrer"></iframe>
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                referrerpolicy="no-referrer"></iframe>
             </div>
           </div>
         </div>
 
-        <!-- HEADERS panel -->
         <div class="rtpanel" id="rsp-rhdrs">
           <div class="panel-toolbar">
             <button class="btn-enlarge-panel" onclick="openEnlargePanel('headers')" title="Full screen">⛶</button>
@@ -371,7 +359,6 @@
           <div class="pcontent"><table class="rh-tbl" id="r-headers-tbl"></table></div>
         </div>
 
-        <!-- COOKIES panel -->
         <div class="rtpanel" id="rsp-rcookies">
           <div class="panel-toolbar">
             <button class="btn-enlarge-panel" onclick="openEnlargePanel('cookies')" title="Full screen">⛶</button>
@@ -379,7 +366,6 @@
           <div class="pcontent" id="cookies-out"></div>
         </div>
 
-        <!-- TEST RESULTS panel -->
         <div class="rtpanel" id="rsp-rtests">
           <div class="panel-toolbar">
             <button class="btn-enlarge-panel" onclick="openEnlargePanel('tests')" title="Full screen">⛶</button>
@@ -389,7 +375,6 @@
           </div>
         </div>
 
-        <!-- CONSOLE panel -->
         <div class="rtpanel" id="rsp-rconsole">
           <div class="console-toolbar">
             <button class="btn-s" onclick="clearConsole()">🗑 Clear</button>
@@ -409,8 +394,8 @@
     <div class="fs-title" id="fs-title">Response Body</div>
     <div class="fs-toolbar" id="fs-toolbar"></div>
     <div class="fs-acts">
-      <button class="btn-s" id="fs-copy-btn"  onclick="fsAction('copy')">📋 Copy</button>
-      <button class="btn-s" id="fs-save-btn"  onclick="fsAction('save')">💾 Save</button>
+      <button class="btn-s" id="fs-copy-btn" onclick="fsAction('copy')">📋 Copy</button>
+      <button class="btn-s" id="fs-save-btn" onclick="fsAction('save')">💾 Save</button>
       <button class="btn-s danger" onclick="closeEnlarge()" title="Close (Esc)">✕ Close</button>
     </div>
   </div>
@@ -442,7 +427,6 @@
 <div id="notifs"></div>
 <div id="modals"></div>
 
-<!-- Split JS into two modules for manageability -->
 <script src="app1.js"></script>
 <script src="app2.js"></script>
 </body>
