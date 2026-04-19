@@ -47,6 +47,7 @@
   <div id="sidebar">
     <div class="sb-tabs">
       <div class="sb-tab active" data-sb="colls"   onclick="switchSB('colls')">COLLS</div>
+      <div class="sb-tab"       data-sb="buckets" onclick="switchSB('buckets')">BUCKETS</div>
       <div class="sb-tab"       data-sb="history"  onclick="switchSB('history')">HISTORY</div>
       <div class="sb-tab"       data-sb="envs"     onclick="switchSB('envs')">ENVS</div>
     </div>
@@ -62,6 +63,15 @@
         <button class="btn-s"        onclick="exportAllColls()">Export All</button>
       </div>
       <div class="sb-list" id="coll-list"></div>
+    </div>
+
+    <!-- BUCKETS (ordered requests + loop — shares 900/s global queue) -->
+    <div class="sb-panel" id="sbp-buckets">
+      <div class="sb-actions">
+        <button class="btn-s accent" onclick="addCurrentToBucket()">📌 Current → bucket</button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);padding:4px 8px;margin:0">Chain requests in order; set loop count and delay. All sends (Send, Attack, Runner, Buckets) share a <strong>900 req/s</strong> cap with automatic queuing.</p>
+      <div class="sb-list" id="bucket-list"></div>
     </div>
 
     <!-- HISTORY -->
@@ -404,10 +414,11 @@
 
 <!-- ═══ ADVANCED REPEAT POPOVER ════════════════════════════ -->
 <div id="adv-popover" class="adv-popover" style="display:none">
-  <div class="adv-title">Advanced Repeat</div>
+  <div class="adv-title">Advanced Repeat (Attack)</div>
+  <p style="font-size:10px;color:var(--text3);margin:0 0 8px">Up to 100k repeats · throttled to 900/s · extra waits in queue</p>
   <div class="adv-row">
     <label>Repeat count</label>
-    <input type="number" id="adv-count" value="5" min="1" max="500" style="width:70px">
+    <input type="number" id="adv-count" value="5" min="1" max="100000" style="width:70px">
   </div>
   <div class="adv-row">
     <label>Delay (ms)</label>
