@@ -127,13 +127,24 @@
         <span id="direct-badge" class="direct-badge"
               title="Private/internal IP — sent DIRECTLY (no proxy)">DIRECT</span>
       </div>
-      <label class="repeat-wrap" title="Send this request N times (attack / load test). Uses same 900/s global limit.">
+      <label class="repeat-wrap" title="Repeat count">
         <span class="repeat-label">×</span>
         <input id="send-repeat" type="number" min="1" max="100000" value="1" placeholder="1">
       </label>
+      <select id="send-repeat-mode" class="send-repeat-mode" title="Queue: one after another. At a time: up to 900 starts per second (next wave next second).">
+        <option value="queue">In queue</option>
+        <option value="burst">At a time</option>
+      </select>
       <button id="save-btn"   onclick="saveToCollection()" title="Save (Ctrl+S)">💾 Save</button>
       <button id="cancel-btn" onclick="cancelReq()"        style="display:none" title="Cancel (Esc)">✕ Cancel</button>
       <button id="send-btn"   onclick="sendRequest()"      title="Send (Ctrl+Enter)">Send ➤</button>
+    </div>
+    <div id="repeat-stats-bar" class="repeat-stats-bar" style="display:none" aria-live="polite">
+      <span id="repeat-st-sent">Sent: 0</span>
+      <span id="repeat-st-ok" class="repeat-st-ok">OK: 0</span>
+      <span id="repeat-st-fail" class="repeat-st-fail">Fail: 0</span>
+      <span id="repeat-st-retry">Retries: 0</span>
+      <span id="repeat-st-q">Queued: 0</span>
     </div>
 
     <!-- SPLIT PANE -->
@@ -447,6 +458,13 @@
   <div class="adv-row">
     <label>Delay (ms)</label>
     <input type="number" id="adv-delay" value="0" min="0" style="width:70px">
+  </div>
+  <div class="adv-row">
+    <label>Mode</label>
+    <select id="adv-mode" style="width:120px">
+      <option value="queue">In queue</option>
+      <option value="burst">At a time</option>
+    </select>
   </div>
   <div class="adv-progress-wrap" id="adv-pw" style="display:none">
     <div class="adv-progress-bar" id="adv-pb"></div>
