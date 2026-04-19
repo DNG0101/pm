@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<!-- ═══ TOPBAR ═══════════════════════════════════════════════ --->
+<!-- ═══ TOPBAR ═══════════════════════════════════════════════ -->
 <div id="topbar">
   <div class="logo">
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
@@ -127,6 +127,10 @@
         <span id="direct-badge" class="direct-badge"
               title="Private/internal IP — sent DIRECTLY (no proxy)">DIRECT</span>
       </div>
+      <label class="repeat-wrap" title="Send this request N times (attack / load test). Uses same 900/s global limit.">
+        <span class="repeat-label">×</span>
+        <input id="send-repeat" type="number" min="1" max="100000" value="1" placeholder="1">
+      </label>
       <button id="save-btn"   onclick="saveToCollection()" title="Save (Ctrl+S)">💾 Save</button>
       <button id="cancel-btn" onclick="cancelReq()"        style="display:none" title="Cancel (Esc)">✕ Cancel</button>
       <button id="send-btn"   onclick="sendRequest()"      title="Send (Ctrl+Enter)">Send ➤</button>
@@ -191,18 +195,38 @@
             </div>
             <div id="body-none"    class="body-sub"><p class="muted-msg">No body will be sent with this request.</p></div>
             <div id="body-form"    class="body-sub" style="display:none">
-              <table class="kv-tbl">
-                <thead><tr><th class="col-chk"></th><th>Key</th><th>Value / File</th><th class="col-type">Type</th><th class="col-del"></th></tr></thead>
-                <tbody id="kv-form"></tbody>
-              </table>
-              <button class="add-row-btn" onclick="addFormRow()">+ Add Field</button>
+              <div class="bulk-kv-toolbar">
+                <button type="button" class="btn-s bulk-mode-btn active" id="btn-form-kv" onclick="setFormBulkMode(false)">Key-Value Edit</button>
+                <button type="button" class="btn-s bulk-mode-btn" id="btn-form-bulk" onclick="setFormBulkMode(true)">Bulk Edit</button>
+                <span class="bulk-hint">One field per line: <code>key=value</code> or <code>key: value</code> · lines starting with <code>#</code> are ignored</span>
+              </div>
+              <div id="form-kv-wrap">
+                <table class="kv-tbl">
+                  <thead><tr><th class="col-chk"></th><th>Key</th><th>Value / File</th><th class="col-type">Type</th><th class="col-del"></th></tr></thead>
+                  <tbody id="kv-form"></tbody>
+                </table>
+                <button type="button" class="add-row-btn" onclick="addFormRow()">+ Add Field</button>
+              </div>
+              <div id="form-bulk-wrap" class="bulk-text-wrap" style="display:none">
+                <textarea id="bulk-form" class="code-area" rows="14" spellcheck="false" placeholder="input_14=Individual Flat&#10;input_21=DONTHULA NITHISH&#10;field=value"></textarea>
+              </div>
             </div>
             <div id="body-urlenc" class="body-sub" style="display:none">
-              <table class="kv-tbl">
-                <thead><tr><th class="col-chk"></th><th>Key</th><th>Value</th><th>Description</th><th class="col-del"></th></tr></thead>
-                <tbody id="kv-urlenc"></tbody>
-              </table>
-              <button class="add-row-btn" onclick="addKVRow('urlenc')">+ Add Field</button>
+              <div class="bulk-kv-toolbar">
+                <button type="button" class="btn-s bulk-mode-btn active" id="btn-urlenc-kv" onclick="setUrlencBulkMode(false)">Key-Value Edit</button>
+                <button type="button" class="btn-s bulk-mode-btn" id="btn-urlenc-bulk" onclick="setUrlencBulkMode(true)">Bulk Edit</button>
+                <span class="bulk-hint">Same format as form-data bulk</span>
+              </div>
+              <div id="urlenc-kv-wrap">
+                <table class="kv-tbl">
+                  <thead><tr><th class="col-chk"></th><th>Key</th><th>Value</th><th>Description</th><th class="col-del"></th></tr></thead>
+                  <tbody id="kv-urlenc"></tbody>
+                </table>
+                <button type="button" class="add-row-btn" onclick="addKVRow('urlenc')">+ Add Field</button>
+              </div>
+              <div id="urlenc-bulk-wrap" class="bulk-text-wrap" style="display:none">
+                <textarea id="bulk-urlenc" class="code-area" rows="14" spellcheck="false" placeholder="key=value&#10;name: value"></textarea>
+              </div>
             </div>
             <div id="body-raw"    class="body-sub" style="display:none">
               <div class="raw-toolbar">
