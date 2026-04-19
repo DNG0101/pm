@@ -1,4 +1,4 @@
-/* =============================================================
+/* ============================================================
    POSTMANWEB v4 — app1.js  (Module 1 of 2)
    ============================================================ */
 'use strict';
@@ -34,6 +34,9 @@ function fixHistory(arr) {
 }
 
 var _bodyType    = 'none';
+/** form-data: false = table, true = bulk textarea. Same for urlencoded. */
+var _formBulkMode = false;
+var _urlencBulkMode = false;
 var _testResults = [];
 var _consoleLogs = [];
 var _abortCtrl   = null;
@@ -578,6 +581,10 @@ function loadTabUI(t) {
   colorMethod();
   updatePathVars(t.url, t.pathVars||[]);
   refreshDirectBadge(t.url);
+  _formBulkMode = false;
+  _urlencBulkMode = false;
+  applyFormBulkVisual();
+  applyUrlencBulkVisual();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -650,6 +657,131 @@ function loadFormData(rows) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// BULK EDIT (form-data & x-www-form-urlencoded) — Postman-style
+// ─────────────────────────────────────────────────────────────
+function parseBulkKVLine(line) {
+  line = String(line || '').trim();
+  if (!line || line.charAt(0) === '#') return null;
+  var eq = line.indexOf('=');
+  var col = line.indexOf(':');
+  var sep = -1;
+  if (eq >= 0 && (col < 0 || eq <= col)) sep = eq;
+  else if (col >= 0) sep = col;
+  if (sep < 0) return null;
+  var k = line.slice(0, sep).trim();
+  var v = line.slice(sep + 1).trim();
+  if (!k) return null;
+  return { k: k, v: v };
+}
+function syncFormBulkFromTable() {
+  var ta = document.getElementById('bulk-form');
+  if (!ta) return;
+  var lines = [];
+  document.querySelectorAll('#kv-form tr').forEach(function(tr) {
+    var chk = tr.querySelector('.kv-chk');
+    if (chk && !chk.checked) return;
+    var key = (tr.querySelectorAll('input[type=text]')[0] || {}).value || '';
+    var typ = (tr.querySelector('.fv-type-sel') || {}).value || 'text';
+    if (typ === 'file') {
+      if (key) lines.push('# file field: ' + key + ' (set file in Key-Value table)');
+      return;
+    }
+    var val = (tr.querySelector('.fv-text input') || {}).value || '';
+    if (!key && !val) return;
+    lines.push(key + '=' + val);
+  });
+  ta.value = lines.join('\n');
+}
+function syncFormTableFromBulk() {
+  var ta = document.getElementById('bulk-form');
+  if (!ta) return;
+  var tbody = document.getElementById('kv-form');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  var lines = ta.value.split(/\r?\n/);
+  var any = false;
+  lines.forEach(function(line) {
+    var p = parseBulkKVLine(line);
+    if (p) { addFormRow(p.k, p.v, 'text'); any = true; }
+  });
+  if (!any) addFormRow();
+}
+function applyFormBulkVisual() {
+  var kv = document.getElementById('form-kv-wrap');
+  var bulk = document.getElementById('form-bulk-wrap');
+  var b1 = document.getElementById('btn-form-kv');
+  var b2 = document.getElementById('btn-form-bulk');
+  if (!kv || !bulk) return;
+  if (_formBulkMode) {
+    kv.style.display = 'none';
+    bulk.style.display = 'block';
+    if (b1) b1.classList.remove('active');
+    if (b2) b2.classList.add('active');
+  } else {
+    kv.style.display = 'block';
+    bulk.style.display = 'none';
+    if (b1) b1.classList.add('active');
+    if (b2) b2.classList.remove('active');
+  }
+}
+function setFormBulkMode(isBulk) {
+  if (isBulk) syncFormBulkFromTable();
+  else syncFormTableFromBulk();
+  _formBulkMode = !!isBulk;
+  applyFormBulkVisual();
+}
+function syncUrlencBulkFromTable() {
+  var ta = document.getElementById('bulk-urlenc');
+  if (!ta) return;
+  var lines = [];
+  document.querySelectorAll('#kv-urlenc tr').forEach(function(tr) {
+    var inp = tr.querySelectorAll('input');
+    if (inp.length < 3) return;
+    if (inp[0].type === 'checkbox' && !inp[0].checked) return;
+    var k = inp[1] && inp[1].value || '';
+    var v = inp[2] && inp[2].value || '';
+    if (!k && !v) return;
+    lines.push(k + '=' + v);
+  });
+  ta.value = lines.join('\n');
+}
+function syncUrlencTableFromBulk() {
+  var ta = document.getElementById('bulk-urlenc');
+  if (!ta) return;
+  var lines = ta.value.split(/\r?\n/);
+  var rows = [];
+  lines.forEach(function(line) {
+    var p = parseBulkKVLine(line);
+    if (p) rows.push({ id: uid(), on: true, k: p.k, v: p.v, desc: '' });
+  });
+  loadKV('urlenc', rows);
+}
+function applyUrlencBulkVisual() {
+  var kv = document.getElementById('urlenc-kv-wrap');
+  var bulk = document.getElementById('urlenc-bulk-wrap');
+  var b1 = document.getElementById('btn-urlenc-kv');
+  var b2 = document.getElementById('btn-urlenc-bulk');
+  if (!kv || !bulk) return;
+  if (_urlencBulkMode) {
+    kv.style.display = 'none';
+    bulk.style.display = 'block';
+    if (b1) b1.classList.remove('active');
+    if (b2) b2.classList.add('active');
+  } else {
+    kv.style.display = 'block';
+    bulk.style.display = 'none';
+    if (b1) b1.classList.add('active');
+    if (b2) b2.classList.remove('active');
+  }
+}
+function setUrlencBulkMode(isBulk) {
+  if (isBulk) syncUrlencBulkFromTable();
+  else syncUrlencTableFromBulk();
+  _urlencBulkMode = !!isBulk;
+  applyUrlencBulkVisual();
+}
+
+// ─────────────────────────────────────────────────────────────
 // PATH VARIABLES
 // ─────────────────────────────────────────────────────────────
 function updatePathVars(url, saved) {
@@ -699,6 +831,8 @@ function setBody(type) {
   ['none','form','urlenc','raw','binary','graphql'].forEach(function(t){
     var el=document.getElementById('body-'+t); if(el) el.style.display=t===type?'block':'none';
   });
+  if (type === 'form') applyFormBulkVisual();
+  if (type === 'urlenc') applyUrlencBulkVisual();
 }
 function beautifyRaw() {
   var ta=document.getElementById('code-raw'), fmt=(document.getElementById('raw-fmt')||{}).value;
@@ -1013,6 +1147,91 @@ function collectHistoryEntry(method, rawUrl, status, elapsed) {
 // ─────────────────────────────────────────────────────────────
 // SEND REQUEST
 // ─────────────────────────────────────────────────────────────
+/** Snapshot of active tab for executeRequestObject (repeat attack, etc.) */
+function buildSnapshotFromActiveTab() {
+  var t = getActiveTab();
+  if (!t) return { url: '', method: 'GET', bodyType: 'none' };
+  return {
+    method: t.method || 'GET',
+    url: t.url || '',
+    params: t.params || [],
+    pathVars: t.pathVars || [],
+    headers: t.headers || [],
+    bodyType: t.bodyType || 'none',
+    rawBody: t.rawBody || '',
+    rawFmt: t.rawFmt || 'json',
+    urlEncoded: t.urlEncoded || [],
+    formData: t.formData || [],
+    gqlQ: t.gqlQ || '',
+    gqlV: t.gqlV || '',
+    authType: t.authType || 'none',
+    authData: t.authData || {},
+    reqSettings: {
+      followRedirects: (document.getElementById('opt-redirect') || {}).checked !== false,
+      disableBody: !!(document.getElementById('opt-nobody') || {}).checked,
+      useMock: !!(document.getElementById('opt-mock') || {}).checked,
+      timeout: parseInt((document.getElementById('opt-timeout') || {}).value, 10) || 30000
+    }
+  };
+}
+
+/** Main bar: Send ×N — same request N times (uses global 900/s limiter via executeRequestObject). */
+async function sendRequestRepeatAttack(repeatN, rawUrl, method, tab) {
+  var sendBtn = document.getElementById('send-btn'), cancelBtn = document.getElementById('cancel-btn');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '×' + repeatN + '…';
+  cancelBtn.style.display = '';
+  _abortCtrl = new AbortController();
+  var passed = 0, failed = 0;
+  var lastRo = null;
+  try {
+    var snapshot = buildSnapshotFromActiveTab();
+    if (!snapshot.url || !String(snapshot.url).trim()) {
+      notify('Enter a URL first', 'error');
+      return;
+    }
+    for (var i = 0; i < repeatN; i++) {
+      if (_abortCtrl && _abortCtrl.signal.aborted) {
+        notify('Stopped after ' + i + ' request(s)', 'info');
+        break;
+      }
+      var ro = await executeRequestObject(snapshot, {});
+      lastRo = ro;
+      if (ro.status >= 200 && ro.status < 400) passed++;
+      else failed++;
+    }
+    if (!lastRo) {
+      notify('No response', 'error');
+      return;
+    }
+    var fr = {
+      status: lastRo.status,
+      statusText: lastRo.statusText,
+      _body: lastRo._body,
+      _headers: lastRo._headers,
+      _time: lastRo._time,
+      _size: lastRo._size
+    };
+    if (tab) tab.response = fr;
+    _lastResponse = fr;
+    var pmObj2 = buildPM(fr, (tab && tab.collVars) || {});
+    var tc1 = (document.getElementById('test-script') || {}).value || '';
+    if (tc1.trim()) runScript(tc1, pmObj2);
+    addHistory(collectHistoryEntry(method, rawUrl, lastRo.status, lastRo._time));
+    showResponse(fr);
+    renderTests();
+    flushConsole();
+    notify('Sent ' + repeatN + ' · ~' + passed + ' OK · ' + failed + ' other status', failed ? 'warn' : 'success');
+  } catch (e) {
+    notify('Repeat failed: ' + (e && e.message ? e.message : String(e)), 'error');
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send ➤';
+    cancelBtn.style.display = 'none';
+    _abortCtrl = null;
+  }
+}
+
 function cancelReq() {
   if(_abortCtrl) _abortCtrl.abort();
   document.getElementById('cancel-btn').style.display='none';
@@ -1021,12 +1240,22 @@ function cancelReq() {
 }
 
 async function sendRequest() {
+  if (_formBulkMode) syncFormTableFromBulk();
+  if (_urlencBulkMode) syncUrlencTableFromBulk();
   saveTabUI();
   var tab=getActiveTab(), method=document.getElementById('method-sel').value, rawUrl=document.getElementById('url-in').value.trim();
   if(!rawUrl){ notify('Enter a URL first','error'); return; }
 
+  var repeatEl=document.getElementById('send-repeat');
+  var repeatN=repeatEl?Math.max(1,Math.min(100000,parseInt(repeatEl.value,10)||1)):1;
+
   var preCode=(document.getElementById('pre-script')||{}).value||'';
   if(preCode.trim()){ var pmObj0=buildPM(null,(tab&&tab.collVars)||{}); runScript(preCode,pmObj0); flushConsole(); }
+
+  if(repeatN>1){
+    await sendRequestRepeatAttack(repeatN,rawUrl,method,tab);
+    return;
+  }
 
   var url=resolveVars(rawUrl); url=resolvePathInUrl(url);
   var paramRows=readKV('params').filter(function(r){return r.on&&r.k;});
