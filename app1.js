@@ -240,6 +240,11 @@ function updateRepeatStatsBar(o) {
   if (q) q.textContent = 'Queued: ' + (o.queued != null ? o.queued : 0);
 }
 
+function emitRepeatStats(config, o) {
+  if (config && typeof config.onStats === 'function') try { config.onStats(o); } catch (e) {}
+  updateRepeatStatsBar(o);
+}
+
 /**
  * Shared runner: queue = strict sequential; burst = up to 900 concurrent starts per wave (900/s cap via limiter).
  */
@@ -284,12 +289,12 @@ async function runRepeatBatch(config) {
       var ro = await executeRequestWithRetry(snapshot, {}, {
         signal: signal,
         retryTotal: retryTotal,
-        onRetry: function() { updateRepeatStatsBar({ total: total, sent: i, success: success, failed: failed, retries: retryTotal.v, queued: total - i }); persistState(i); }
+        onRetry: function() { emitRepeatStats(config, { total: total, sent: i, success: success, failed: failed, retries: retryTotal.v, queued: total - i }); persistState(i); }
       });
       lastRo = ro;
       if (ro.status >= 200 && ro.status < 300) success++;
       else failed++;
-      updateRepeatStatsBar({ total: total, sent: i + 1, success: success, failed: failed, retries: retryTotal.v, queued: total - i - 1 });
+      emitRepeatStats(config, { total: total, sent: i + 1, success: success, failed: failed, retries: retryTotal.v, queued: total - i - 1 });
       persistState(i + 1);
       if (delayMs > 0 && i < total - 1) await sleep(delayMs);
     }
@@ -304,7 +309,7 @@ async function runRepeatBatch(config) {
           signal: signal,
           retryTotal: retryTotal,
           onRetry: function() {
-            updateRepeatStatsBar({ total: total, sent: idx, success: success, failed: failed, retries: retryTotal.v, queued: total - idx - 1 });
+            emitRepeatStats(config, { total: total, sent: idx, success: success, failed: failed, retries: retryTotal.v, queued: total - idx - 1 });
             persistState(idx);
           }
         }).then(function(ro) { return { idx: idx, ro: ro }; });
@@ -316,7 +321,7 @@ async function runRepeatBatch(config) {
         else failed++;
       }
       i += wave;
-      updateRepeatStatsBar({ total: total, sent: i, success: success, failed: failed, retries: retryTotal.v, queued: total - i });
+      emitRepeatStats(config, { total: total, sent: i, success: success, failed: failed, retries: retryTotal.v, queued: total - i });
       persistState(i);
       if (delayMs > 0 && i < total) await sleep(delayMs);
     }
@@ -1332,33 +1337,40 @@ function buildSnapshotFromActiveTab() {
   };
 }
 
-/** Main bar: Send ×N — same request N times (uses global 900/s limiter via executeRequestObject). */
+/** Main bar: Send ×N — queue (sequential) or at-a-time (waves of up to 900/s). Live stats + retries + resume. */
 async function sendRequestRepeatAttack(repeatN, rawUrl, method, tab) {
   var sendBtn = document.getElementById('send-btn'), cancelBtn = document.getElementById('cancel-btn');
+  var statsBar = document.getElementById('repeat-stats-bar');
+  var modeEl = document.getElementById('send-repeat-mode');
+  var mode = (modeEl && modeEl.value === 'burst') ? 'burst' : 'queue';
   sendBtn.disabled = true;
   sendBtn.textContent = '×' + repeatN + '…';
   cancelBtn.style.display = '';
+  if (statsBar) statsBar.style.display = 'flex';
+  updateRepeatStatsBar({ total: repeatN, sent: 0, success: 0, failed: 0, retries: 0, queued: repeatN });
   _abortCtrl = new AbortController();
-  var passed = 0, failed = 0;
-  var lastRo = null;
   try {
     var snapshot = buildSnapshotFromActiveTab();
     if (!snapshot.url || !String(snapshot.url).trim()) {
       notify('Enter a URL first', 'error');
+      if (statsBar) statsBar.style.display = 'none';
       return;
     }
-    for (var i = 0; i < repeatN; i++) {
-      if (_abortCtrl && _abortCtrl.signal.aborted) {
-        notify('Stopped after ' + i + ' request(s)', 'info');
-        break;
-      }
-      var ro = await executeRequestObject(snapshot, {});
-      lastRo = ro;
-      if (ro.status >= 200 && ro.status < 400) passed++;
-      else failed++;
-    }
+    var batchResult = await runRepeatBatch({
+      snapshot: snapshot,
+      total: repeatN,
+      mode: mode,
+      delayMs: 0,
+      signal: _abortCtrl.signal,
+      startIndex: 0,
+      rawUrl: rawUrl,
+      method: method,
+      tab: tab,
+      persist: true
+    });
+    var lastRo = batchResult.lastRo;
     if (!lastRo) {
-      notify('No response', 'error');
+      notify(batchResult.aborted ? 'Stopped' : 'No response', batchResult.aborted ? 'info' : 'error');
       return;
     }
     var fr = {
@@ -1378,19 +1390,92 @@ async function sendRequestRepeatAttack(repeatN, rawUrl, method, tab) {
     showResponse(fr);
     renderTests();
     flushConsole();
-    notify('Sent ' + repeatN + ' · ~' + passed + ' OK · ' + failed + ' other status', failed ? 'warn' : 'success');
+    clearRepeatJob();
+    notify('Done · sent ' + repeatN + ' · OK ' + batchResult.success + ' · fail ' + batchResult.failed + ' · retries ' + batchResult.retries, batchResult.failed ? 'warn' : 'success');
   } catch (e) {
-    notify('Repeat failed: ' + (e && e.message ? e.message : String(e)), 'error');
+    if (e && e.name === 'AbortError') notify('Stopped', 'info');
+    else notify('Repeat failed: ' + (e && e.message ? e.message : String(e)), 'error');
   } finally {
     sendBtn.disabled = false;
     sendBtn.textContent = 'Send ➤';
     cancelBtn.style.display = 'none';
+    if (statsBar) statsBar.style.display = 'none';
+    _abortCtrl = null;
+  }
+}
+
+/** Resume an interrupted ×N run after reload (same tab / new session). */
+async function resumeRepeatJobFromStorage() {
+  var job = readRepeatJob();
+  if (!job || !job.active || !job.snapshot || job.done >= job.total) { clearRepeatJob(); return; }
+  var remain = job.total - job.done;
+  if (!confirm('Resume incomplete batch: ' + job.done + ' / ' + job.total + ' done (' + remain + ' left)?')) {
+    clearRepeatJob();
+    return;
+  }
+  var sendBtn = document.getElementById('send-btn'), cancelBtn = document.getElementById('cancel-btn');
+  var statsBar = document.getElementById('repeat-stats-bar');
+  if (statsBar) statsBar.style.display = 'flex';
+  sendBtn.disabled = true;
+  cancelBtn.style.display = '';
+  _abortCtrl = new AbortController();
+  var method = job.method || 'GET';
+  var rawUrl = job.rawUrl || '';
+  var tab = getActiveTab();
+  updateRepeatStatsBar({ total: job.total, sent: job.done, success: job.success || 0, failed: job.failed || 0, retries: job.retries || 0, queued: job.total - job.done });
+  try {
+    var batchResult = await runRepeatBatch({
+      snapshot: job.snapshot,
+      total: job.total,
+      mode: job.mode === 'burst' ? 'burst' : 'queue',
+      delayMs: 0,
+      signal: _abortCtrl.signal,
+      startIndex: job.done,
+      rawUrl: rawUrl,
+      method: method,
+      tab: tab,
+      initialSuccess: job.success || 0,
+      initialFailed: job.failed || 0,
+      initialRetries: job.retries || 0,
+      persist: true
+    });
+    var lastRo = batchResult.lastRo;
+    if (lastRo) {
+      var fr = {
+        status: lastRo.status,
+        statusText: lastRo.statusText,
+        _body: lastRo._body,
+        _headers: lastRo._headers,
+        _time: lastRo._time,
+        _size: lastRo._size
+      };
+      if (tab) tab.response = fr;
+      _lastResponse = fr;
+      var pmObj2 = buildPM(fr, (tab && tab.collVars) || {});
+      var tc1 = (document.getElementById('test-script') || {}).value || '';
+      if (tc1.trim()) runScript(tc1, pmObj2);
+      showResponse(fr);
+      renderTests();
+      flushConsole();
+    }
+    clearRepeatJob();
+    notify('Resume finished · OK ' + batchResult.success + ' · fail ' + batchResult.failed, batchResult.failed ? 'warn' : 'success');
+  } catch (e) {
+    if (e && e.name === 'AbortError') notify('Stopped', 'info');
+    else notify('Resume failed: ' + (e && e.message ? e.message : String(e)), 'error');
+  } finally {
+    sendBtn.disabled = false;
+    cancelBtn.style.display = 'none';
+    if (statsBar) statsBar.style.display = 'none';
     _abortCtrl = null;
   }
 }
 
 function cancelReq() {
   if(_abortCtrl) _abortCtrl.abort();
+  if(typeof _advRunning!=='undefined') _advRunning=false;
+  var statsBar=document.getElementById('repeat-stats-bar');
+  if(statsBar)statsBar.style.display='none';
   document.getElementById('cancel-btn').style.display='none';
   document.getElementById('send-btn').disabled=false;
   document.getElementById('send-btn').textContent='Send ➤';
