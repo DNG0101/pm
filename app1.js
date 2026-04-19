@@ -24,6 +24,8 @@ var S = {
     historyOn:   true,
     theme:       'dark',
   }),
+  /** Named buckets of request snapshots for looped runs */
+  buckets:     load('pw_buckets', []),
 };
 
 function fixHistory(arr) {
@@ -61,6 +63,7 @@ function save() {
     localStorage.setItem('pw_settings', JSON.stringify(S.settings));
     localStorage.setItem('pw_ws',       JSON.stringify(S.workspaces));
     localStorage.setItem('pw_aws',      JSON.stringify(S.activeWS));
+    localStorage.setItem('pw_buckets',   JSON.stringify(S.buckets || []));
   } catch(e) { console.error('Save error', e); }
 }
 
@@ -137,6 +140,31 @@ function esc(s) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function sleep(ms) { return new Promise(function(r){ setTimeout(r, ms); }); }
+
+/**
+ * Global throttle: at most 900 outbound HTTP calls per rolling 1-second window.
+ * Example: 9000 “Attack” repeats → ~900 run as fast as the network allows, then the rest
+ * wait in a queue until older calls fall outside the 1s window — effectively ~900 per second,
+ * never more than 900 in any 1000ms slice. Applies to Send, Attack, Collection runner, Buckets, pm.sendRequest.
+ */
+var MAX_REQUESTS_PER_SECOND = 900;
+var _rateWindow = [];
+async function acquireRateSlot() {
+  for (;;) {
+    var now = Date.now();
+    while (_rateWindow.length && now - _rateWindow[0] >= 1000) _rateWindow.shift();
+    if (_rateWindow.length < MAX_REQUESTS_PER_SECOND) {
+      _rateWindow.push(now);
+      return;
+    }
+    var wait = Math.max(0, 1000 - (now - _rateWindow[0])) + 1;
+    await sleep(wait);
+  }
+}
+async function rateLimitedFetch(url, opts) {
+  await acquireRateSlot();
+  return fetch(url, opts);
+}
 function notify(msg, type) {
   type = type || 'info';
   var el = document.createElement('div');
@@ -440,7 +468,7 @@ function buildPM(response, collVars) {
       if(opts.headers)Object.assign(h,opts.headers);
       var fo={method:(opts.method||'GET').toUpperCase(),headers:h};
       if(opts.body)fo.body=typeof opts.body==='string'?opts.body:opts.body&&opts.body.raw?opts.body.raw:JSON.stringify(opts.body);
-      fetch(fu,fo).then(function(r){
+      rateLimitedFetch(fu, fo).then(function(r){
         return r.text().then(function(body){
           var hdrs={};r.headers.forEach(function(v,k){hdrs[k]=v;});
           var res={code:r.status,status:r.statusText,_body:body,_headers:hdrs,json:function(){return JSON.parse(body);},text:function(){return body;},headers:{get:function(k){return hdrs[k.toLowerCase()];},has:function(k){return !!(hdrs[k.toLowerCase()]);},toObject:function(){return Object.assign({},hdrs);}},to:{have:{status:function(code){if(r.status!==code)throw new Error(r.status+'!='+code);}}}};
@@ -735,6 +763,109 @@ async function computeAuth(method, url) {
   return { headers:headers, queryParams:queryParams };
 }
 
+/** Same auth logic as computeAuth, using a saved authData map (history / collections / buckets). */
+async function computeAuthFromSnapshot(authType, authData, method, url, dataRow) {
+  authData = authData || {};
+  dataRow = dataRow || {};
+  var rv = function(id){ return resolveVars(authData[id] != null ? String(authData[id]) : '', dataRow); };
+  var headers = {}, queryParams = {};
+  if (authType === 'bearer') { var t = rv('a-token'); if (t) headers['Authorization'] = 'Bearer ' + t; }
+  else if (authType === 'basic') { var u = rv('a-user'), p = rv('a-pass'); headers['Authorization'] = 'Basic ' + btoa(unescape(encodeURIComponent(u + ':' + p))); }
+  else if (authType === 'apikey') {
+    var loc = authData['a-key-in'] || 'header', k = rv('a-key'), v = rv('a-key-val');
+    if (k && v) { if (loc === 'query') queryParams[k] = v; else headers[k] = v; }
+  }
+  else if (authType === 'oauth2') { var t2 = rv('a-o2'), pr = authData['a-o2p'] || 'Bearer'; if (t2) headers['Authorization'] = pr + ' ' + t2; }
+  else if (authType === 'oauth1') {
+    var ck = rv('a-ck'), cs = rv('a-cs'), at = rv('a-at'), ts = rv('a-ts'), sm = authData['a-sm'] || 'HMAC-SHA1';
+    if (ck && cs) { try { headers['Authorization'] = await signOAuth1(method, url, ck, cs, at, ts, sm); } catch (e) { console.error('OAuth1', e); } }
+  }
+  else if (authType === 'hawk') {
+    var hid = rv('a-hid'), hkey = rv('a-hkey'), halg = authData['a-halg'] || 'sha256';
+    if (hid && hkey) { try { headers['Authorization'] = await signHawk(method, url, hid, hkey, halg); } catch (e) { console.error('Hawk', e); } }
+  }
+  else if (authType === 'aws') {
+    var ak = rv('a-ak'), sk = rv('a-sk'), reg = rv('a-region') || 'us-east-1', svc = rv('a-svc') || 'execute-api', ses = rv('a-sess');
+    if (ak && sk) { try { Object.assign(headers, await signAWSv4(method, url, null, ak, sk, reg, svc, ses)); } catch (e) { console.error('AWS', e); } }
+  }
+  return { headers: headers, queryParams: queryParams };
+}
+
+function applyPathVarsToUrlString(url, pathVars, dataRow) {
+  dataRow = dataRow || {};
+  var out = resolveVars(url || '', dataRow);
+  (pathVars || []).forEach(function(row) {
+    if (!row.k) return;
+    var val = encodeURIComponent(resolveVars(row.v, dataRow));
+    out = out.replace(new RegExp(':' + row.k + '(?=/|$|\\?|#)', 'g'), val);
+    out = out.replace(new RegExp('\\{' + row.k + '\\}', 'g'), val);
+  });
+  return out;
+}
+
+/**
+ * Full request execution for history entries, collection items, and bucket snapshots
+ * (all body modes except binary file replay).
+ */
+async function executeRequestObject(req, dataRow) {
+  dataRow = dataRow || {};
+  var method = (req.method || 'GET').toUpperCase();
+  var rawUrl = resolveVars(req.url || '', dataRow);
+  var url = applyPathVarsToUrlString(rawUrl, req.pathVars, dataRow);
+  var paramRows = (req.params || []).filter(function(r){ return r.on !== false && (r.k || r.key); });
+  var qpAll = {};
+  paramRows.forEach(function(r){ qpAll[resolveVars(r.k || r.key, dataRow)] = resolveVars(r.v || r.value || '', dataRow); });
+  var authR = await computeAuthFromSnapshot(req.authType || 'none', req.authData || {}, method, url, dataRow);
+  Object.assign(qpAll, authR.queryParams);
+  var qpStr = new URLSearchParams(qpAll).toString();
+  var finalUrl = url;
+  if (qpStr) finalUrl += (url.indexOf('?') !== -1 ? '&' : '?') + qpStr;
+
+  var headers = {};
+  (req.headers || []).filter(function(x){ return x.on !== false && (x.k || x.key); }).forEach(function(x){
+    headers[resolveVars(x.k || x.key, dataRow)] = resolveVars(x.v || x.value || '', dataRow);
+  });
+  Object.assign(headers, authR.headers);
+
+  var body = null;
+  var bt = req.bodyType || 'none';
+  var rs = req.reqSettings || {};
+  if (['GET', 'HEAD'].indexOf(method) === -1 && !rs.disableBody) {
+    if (bt === 'raw') {
+      body = resolveVars(req.rawBody || '', dataRow);
+      var ctMap = { json: 'application/json', xml: 'application/xml', html: 'text/html', text: 'text/plain', javascript: 'application/javascript' };
+      var rf = req.rawFmt || 'json';
+      if (!headers['Content-Type'] && !headers['content-type']) headers['Content-Type'] = ctMap[rf] || 'text/plain';
+    } else if (bt === 'urlenc') {
+      var urows = (req.urlEncoded || []).filter(function(r){ return r.on !== false && (r.k || r.key); });
+      body = urows.map(function(r){
+        return encodeURIComponent(resolveVars(r.k || r.key, dataRow)) + '=' + encodeURIComponent(resolveVars(r.v || r.value || '', dataRow));
+      }).join('&');
+      headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    } else if (bt === 'form') {
+      var fd = new FormData();
+      var formRows = req.formData || req.formFields || [];
+      formRows.forEach(function(r){
+        var key = r.k || r.key;
+        if (!key || r.on === false) return;
+        if (r.type === 'file') return;
+        fd.append(key, resolveVars(r.v || r.value || '', dataRow));
+      });
+      body = fd;
+      var nh = {};
+      Object.keys(headers).forEach(function(k){ if (k.toLowerCase() !== 'content-type') nh[k] = headers[k]; });
+      headers = nh;
+    } else if (bt === 'graphql') {
+      var vars = {};
+      try { vars = JSON.parse(resolveVars(req.gqlV || '{}', dataRow)); } catch (e) {}
+      body = JSON.stringify({ query: resolveVars(req.gqlQ || '', dataRow), variables: vars });
+      if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    }
+  }
+
+  return fetchDirect(finalUrl, method, headers, body);
+}
+
 async function signOAuth1(method,url,ck,cs,at,ts,sm){
   sm=sm||'HMAC-SHA1';
   var uo;try{uo=new URL(url);}catch(e){uo=new URL('https://example.com');}
@@ -978,7 +1109,7 @@ async function sendRequest() {
 
     // Digest auth retry
     if((document.getElementById('auth-sel')||{}).value==='digest'){
-      var r0=await fetch(fetchUrl,Object.assign({},opts,{headers:Object.assign({},headers)})).catch(function(){return null;});
+      var r0=await rateLimitedFetch(fetchUrl,Object.assign({},opts,{headers:Object.assign({},headers)})).catch(function(){return null;});
       if(r0&&r0.status===401){
         var wa=r0.headers.get('www-authenticate')||'';
         var realm=(wa.match(/realm="([^"]+)"/i)||[])[1]||(document.getElementById('a-realm')||{}).value||'';
@@ -995,7 +1126,7 @@ async function sendRequest() {
       }
     }
 
-    var resp=await fetch(fetchUrl,opts);
+    var resp=await rateLimitedFetch(fetchUrl,opts);
     clearTimeout(tId);
     var elapsed=Date.now()-t0;
     var respH={};
@@ -1069,15 +1200,20 @@ async function sendRequest() {
   }
 }
 
-// Helper for collection runner / advanced repeat
+// Helper for collection runner / advanced repeat / buckets
 async function fetchDirect(url, method, headers, body) {
   headers=headers||{}; body=body||null;
   var isDirect=isPrivate(url);
   var fu=isDirect?url:(S.settings.corsEnabled?S.settings.proxyUrl+encodeURIComponent(url):url);
   var opts={method:method||'GET',headers:headers};
   if(body&&['GET','HEAD'].indexOf((method||'GET').toUpperCase())===-1) opts.body=body;
+  if (body instanceof FormData) {
+    var nh = {};
+    Object.keys(headers).forEach(function(k){ if (k.toLowerCase() !== 'content-type') nh[k] = headers[k]; });
+    opts.headers = nh;
+  }
   var t0=Date.now();
-  var resp=await fetch(fu,opts);
+  var resp=await rateLimitedFetch(fu,opts);
   var txt=await resp.text();
   var hdrs={};resp.headers.forEach(function(v,k){hdrs[k]=v;});
   return {status:resp.status,statusText:resp.statusText,_body:txt,_headers:hdrs,_time:Date.now()-t0,_size:new Blob([txt]).size};
