@@ -1,860 +1,486 @@
-/* ============================================================
-   POSTMANWEB v4 — style.css
-   ============================================================ */
-
-/* ── TOKENS ─────────────────────────────────────────────────── */
-:root {
-  --bg:       #0f0f17;
-  --bg2:      #161622;
-  --bg3:      #1e1e2e;
-  --bg4:      #252538;
-  --border:   #2a2a40;
-  --border2:  #353550;
-  --text1:    #e2e2f0;
-  --text2:    #a0a0c0;
-  --text3:    #5a5a80;
-  --accent:   #7c6af7;
-  --accent2:  #9d8fff;
-  --ok:       #23d18b;
-  --warn:     #e5a100;
-  --err:      #f14c4c;
-  --get:      #23d18b;
-  --post:     #f0a500;
-  --put:      #3b9eff;
-  --patch:    #b06cff;
-  --delete:   #f14c4c;
-  --head:     #23c4d1;
-  --options:  #888888;
-  --radius:   6px;
-  --radius2:  10px;
-  --mono:     'JetBrains Mono', 'Fira Code', monospace;
-  --sans:     'Inter', system-ui, sans-serif;
-  --topbar-h: 44px;
-  --sb-w:     260px;
-}
-
-[data-theme="light"] {
-  --bg:      #f5f5fa;
-  --bg2:     #ffffff;
-  --bg3:     #ebebf5;
-  --bg4:     #ddddf0;
-  --border:  #d0d0e8;
-  --border2: #b8b8d8;
-  --text1:   #1a1a2e;
-  --text2:   #4a4a6a;
-  --text3:   #8888aa;
-  --accent:  #6055e0;
-  --accent2: #7c6af7;
-}
-
-/* ── RESET ──────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-  height: 100%; overflow: hidden;
-  font-family: var(--sans);
-  background: var(--bg);
-  color: var(--text1);
-  font-size: 13px;
-}
-
-button   { cursor: pointer; font-family: var(--sans); font-size: 12px; border: none; background: none; }
-input, select, textarea {
-  font-family: var(--sans); font-size: 12px;
-  color: var(--text1); background: var(--bg2);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  outline: none;
-}
-input:focus, select:focus, textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(124,106,247,.15);
-}
-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5a80'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  padding-right: 22px;
-}
-
-::-webkit-scrollbar       { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text3); }
-
-/* ── TOPBAR ─────────────────────────────────────────────────── */
-#topbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  height: var(--topbar-h);
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 6px;
-  padding: 0 8px;
-  overflow: hidden;
-}
-.logo {
-  display: flex; align-items: center; gap: 7px;
-  font-weight: 700; font-size: 14px; color: var(--text1);
-  white-space: nowrap; padding-right: 8px;
-  border-right: 1px solid var(--border); margin-right: 2px;
-  flex-shrink: 0;
-}
-.ws-bar { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.ws-bar select { height: 28px; padding: 0 22px 0 8px; font-size: 11px; max-width: 130px; }
-
-#tabs {
-  display: flex; align-items: center; gap: 2px;
-  flex: 1; overflow-x: auto; overflow-y: hidden;
-  scrollbar-width: none;
-}
-#tabs::-webkit-scrollbar { display: none; }
-
-.tab-item {
-  display: flex; align-items: center; gap: 5px;
-  height: 32px; padding: 0 10px; border-radius: var(--radius);
-  cursor: pointer; white-space: nowrap; flex-shrink: 0;
-  color: var(--text2); font-size: 11px;
-  transition: background .15s;
-  max-width: 180px;
-}
-.tab-item:hover    { background: var(--bg3); }
-.tab-item.active   { background: var(--bg3); color: var(--text1); }
-.tab-method { font-weight: 700; font-size: 10px; flex-shrink: 0; }
-.tab-name   { overflow: hidden; text-overflow: ellipsis; }
-.tab-close  {
-  opacity: 0; color: var(--text3); padding: 2px 4px;
-  border-radius: 3px; flex-shrink: 0; transition: opacity .15s;
-}
-.tab-item:hover .tab-close,
-.tab-item.active .tab-close { opacity: 1; }
-.tab-close:hover { background: var(--bg4); color: var(--err); }
-
-#btn-new-tab {
-  height: 28px; width: 28px; border-radius: var(--radius);
-  color: var(--text2); font-size: 16px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-}
-#btn-new-tab:hover { background: var(--bg3); color: var(--text1); }
-
-.topbar-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; margin-left: auto; }
-
-.btn-topbar {
-  height: 28px; padding: 0 10px; border-radius: var(--radius);
-  color: var(--text2); font-size: 11px; white-space: nowrap;
-  border: 1px solid transparent; transition: all .15s;
-}
-.btn-topbar:hover { background: var(--bg3); color: var(--text1); border-color: var(--border); }
-
-#cors-btn {
-  height: 28px; padding: 0 10px; border-radius: var(--radius);
-  font-size: 11px; font-weight: 600;
-  border: 1px solid var(--border); color: var(--text3);
-  transition: all .15s;
-}
-#cors-btn.on { background: rgba(35,209,139,.12); color: var(--ok); border-color: rgba(35,209,139,.3); }
-#cors-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-.env-quick-sel { height: 28px; padding: 0 22px 0 8px; font-size: 11px; max-width: 150px; }
-
-/* ── MAIN LAYOUT ────────────────────────────────────────────── */
-#main {
-  display: flex;
-  margin-top: var(--topbar-h);
-  height: calc(100vh - var(--topbar-h));
-  overflow: hidden;
-}
-
-/* ── SIDEBAR ────────────────────────────────────────────────── */
-#sidebar {
-  width: var(--sb-w); flex-shrink: 0;
-  background: var(--bg2);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  overflow: hidden;
-  transition: width .2s, opacity .2s;
-}
-#sidebar.hidden { width: 0; opacity: 0; pointer-events: none; }
-
-.sb-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.sb-tab {
-  flex: 1; text-align: center; padding: 9px 4px;
-  font-size: 10px; font-weight: 700; letter-spacing: .06em;
-  color: var(--text3); cursor: pointer; transition: color .15s;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-}
-.sb-tab:hover  { color: var(--text2); }
-.sb-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-.sb-panel        { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-.sb-panel.active { display: flex; }
-
-.sb-search { padding: 8px; flex-shrink: 0; }
-.sb-search input { width: 100%; height: 28px; padding: 0 8px; }
-.sb-actions { display: flex; gap: 5px; padding: 0 8px 8px; flex-shrink: 0; flex-wrap: wrap; }
-.sb-list    { flex: 1; overflow-y: auto; padding: 4px 0; }
-
-.empty-state    { text-align: center; padding: 32px 16px; color: var(--text3); }
-.empty-state .ei{ font-size: 32px; margin-bottom: 8px; }
-.empty-state p  { font-size: 12px; line-height: 1.5; }
-
-/* ── HISTORY ────────────────────────────────────────────────── */
-.hist-header  { padding: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.hist-rec-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.hist-label   { font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--text3); display: flex; align-items: center; gap: 6px; }
-.hrec-dot     { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 2px rgba(35,209,139,.2); }
-.hrec-dot.off { background: var(--text3); box-shadow: none; }
-.hist-sec     { padding: 6px 10px 3px; font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: .06em; }
-
-.hist-row {
-  display: flex; align-items: flex-start; gap: 5px;
-  padding: 6px 8px; cursor: pointer;
-  border-bottom: 1px solid transparent;
-  transition: background .12s;
-}
-.hist-row:hover  { background: var(--bg3); }
-.hist-row.pinned { background: rgba(124,106,247,.06); border-left: 2px solid var(--accent); }
-
-/* NEW — main block holds URL + body preview */
-.hist-main {
-  flex: 1; min-width: 0;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.hist-url {
-  font-size: 11px; color: var(--text1);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  display: block;
-}
-/* NEW — compact body preview beneath the URL */
-.hist-body-preview {
-  font-size: 10px; color: var(--text3);
-  font-family: var(--mono);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  display: block; max-width: 100%;
-}
-/* NEW — status code badge in history row */
-.hist-status      { font-size: 10px; font-weight: 700; font-family: var(--mono); flex-shrink: 0; padding: 1px 4px; border-radius: 3px; color: var(--text3); }
-.hist-status.sok  { color: var(--ok); }
-.hist-status.swarn{ color: var(--warn); }
-.hist-status.serr { color: var(--err); }
-
-.hist-time { font-size: 10px; color: var(--text3); flex-shrink: 0; white-space: nowrap; }
-.hist-acts { display: flex; gap: 3px; flex-shrink: 0; opacity: 0; transition: opacity .15s; }
-.hist-row:hover .hist-acts { opacity: 1; }
-
-.hist-adv-btn, .hist-pin-btn, .hist-del-btn {
-  font-size: 10px; padding: 2px 5px; border-radius: 3px;
-  border: 1px solid var(--border); color: var(--text2); transition: all .15s;
-}
-.hist-adv-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-.hist-pin-btn:hover { background: var(--bg4); }
-.hist-del-btn:hover { background: var(--err); color: #fff; border-color: var(--err); }
-
-/* ── COLLECTIONS ────────────────────────────────────────────── */
-.coll-item   { border-bottom: 1px solid var(--border); }
-.coll-header {
-  display: flex; align-items: center; gap: 6px; padding: 8px 10px;
-  cursor: pointer; transition: background .12s;
-}
-.coll-header:hover { background: var(--bg3); }
-.coll-arrow  { font-size: 8px; color: var(--text3); transition: transform .15s; flex-shrink: 0; }
-.coll-arrow.open { transform: rotate(90deg); }
-.coll-name   { flex: 1; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.coll-btns   { display: flex; gap: 3px; opacity: 0; transition: opacity .15s; }
-.coll-header:hover .coll-btns { opacity: 1; }
-.coll-reqs   { display: none; }
-.coll-reqs.open { display: block; }
-
-.folder-header { display: flex; align-items: center; gap: 5px; padding: 5px 10px 5px 20px; cursor: pointer; font-size: 11px; color: var(--text2); }
-.folder-header:hover { background: var(--bg3); }
-.folder-arrow  { font-size: 8px; color: var(--text3); transition: transform .15s; }
-.folder-arrow.open { transform: rotate(90deg); }
-.folder-reqs   { display: none; }
-.folder-reqs.open { display: block; }
-
-.req-row {
-  display: flex; align-items: center; gap: 6px;
-  padding: 5px 10px 5px 28px; cursor: pointer; font-size: 11px;
-  transition: background .12s; color: var(--text2);
-}
-.req-row:hover        { background: var(--bg3); color: var(--text1); }
-.folder-req-row       { padding-left: 36px; }
-.req-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.req-btns { display: flex; gap: 3px; opacity: 0; transition: opacity .15s; }
-.req-row:hover .req-btns { opacity: 1; }
-
-.icon-btn { padding: 2px 5px; border-radius: 3px; font-size: 11px; color: var(--text3); border: 1px solid transparent; transition: all .15s; }
-.icon-btn:hover     { background: var(--bg4); border-color: var(--border); color: var(--text1); }
-.icon-btn.del:hover { background: var(--err); color: #fff; border-color: var(--err); }
-
-/* ── ENVIRONMENTS ───────────────────────────────────────────── */
-.env-row        { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; transition: background .12s; }
-.env-row:hover  { background: var(--bg3); }
-.env-row.active-env { background: rgba(124,106,247,.08); }
-.env-dot        { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
-.env-dot.on     { background: var(--ok); box-shadow: 0 0 0 2px rgba(35,209,139,.2); }
-.env-nm         { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ev-row         { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
-.ev-row input   { flex: 1; height: 28px; padding: 0 8px; }
-.ev-del         { background: none; border: none; color: var(--err); cursor: pointer; padding: 0 4px; font-size: 14px; }
-
-/* ── WORKSPACE ──────────────────────────────────────────────── */
-#workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-/* ── URL BAR ────────────────────────────────────────────────── */
-#urlbar {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 10px;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.btn-icon-url {
-  height: 32px; width: 32px; border-radius: var(--radius);
-  color: var(--text2); font-size: 16px; flex-shrink: 0;
-  border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-}
-.btn-icon-url:hover { background: var(--bg3); color: var(--text1); }
-
-#method-sel {
-  height: 34px; padding: 0 26px 0 10px;
-  font-weight: 700; font-size: 12px;
-  flex-shrink: 0; min-width: 90px;
-  border-radius: var(--radius);
-}
-
-.url-wrap    { position: relative; flex: 1; }
-#url-in      { width: 100%; height: 34px; padding: 0 68px 0 12px; font-family: var(--mono); font-size: 12px; border-radius: var(--radius); }
-
-.direct-badge {
-  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-  font-size: 9px; font-weight: 800; letter-spacing: .07em;
-  color: var(--warn); background: rgba(229,161,0,.1);
-  border: 1px solid rgba(229,161,0,.3);
-  padding: 2px 6px; border-radius: 3px;
-  display: none; pointer-events: none;
-}
-.direct-badge.visible { display: block; }
-
-#save-btn, #cancel-btn, #send-btn {
-  height: 34px; padding: 0 14px; border-radius: var(--radius);
-  font-weight: 600; font-size: 12px; white-space: nowrap; flex-shrink: 0;
-  border: 1px solid var(--border); color: var(--text2); transition: all .15s;
-}
-#save-btn:hover   { background: var(--bg3); color: var(--text1); }
-#cancel-btn       { color: var(--err); border-color: rgba(241,76,76,.3); }
-#cancel-btn:hover { background: rgba(241,76,76,.1); }
-#send-btn         { background: var(--accent); color: #fff; border-color: var(--accent); }
-#send-btn:hover   { background: var(--accent2); }
-#send-btn:disabled{ opacity: .6; cursor: not-allowed; }
-
-.repeat-wrap {
-  display: flex; align-items: center; gap: 2px;
-  flex-shrink: 0;
-  padding: 0 8px 0 6px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg3);
-  height: 34px;
-}
-.repeat-label { font-size: 13px; color: var(--text3); font-weight: 700; padding-right: 2px; }
-#send-repeat {
-  width: 52px; height: 26px; border: none; background: transparent;
-  text-align: center; font-family: var(--mono); font-size: 12px;
-}
-#send-repeat:focus { box-shadow: none; }
-
-.send-repeat-mode {
-  height: 34px;
-  max-width: 118px;
-  padding: 0 8px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--bg3);
-  color: var(--text2);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.repeat-stats-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-  padding: 6px 12px;
-  margin: 0 0 0 0;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text2);
-  background: var(--bg3);
-  border-bottom: 1px solid var(--border);
-  font-family: var(--mono);
-}
-.repeat-stats-bar .repeat-st-ok { color: var(--ok); }
-.repeat-stats-bar .repeat-st-fail { color: var(--err); }
-
-.bulk-kv-toolbar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  margin-bottom: 10px; padding: 8px 10px;
-  background: var(--bg3); border-radius: var(--radius); border: 1px solid var(--border);
-}
-.bulk-kv-toolbar .bulk-mode-btn {
-  padding: 5px 12px; border-radius: var(--radius);
-  border: 1px solid var(--border); color: var(--text2); background: var(--bg2);
-}
-.bulk-kv-toolbar .bulk-mode-btn:hover { background: var(--bg4); color: var(--text1); }
-.bulk-kv-toolbar .bulk-mode-btn.active {
-  background: var(--accent); color: #fff; border-color: var(--accent);
-}
-.bulk-hint { font-size: 11px; color: var(--text3); flex: 1; min-width: 180px; line-height: 1.35; }
-.bulk-hint code { font-size: 10px; color: var(--accent2); font-family: var(--mono); }
-.bulk-text-wrap { margin-bottom: 8px; }
-.bulk-text-wrap .code-area { width: 100%; font-family: var(--mono); min-height: 200px; }
-
-/* ── SPLIT PANE ─────────────────────────────────────────────── */
-#split     { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-#req-area  { height: 42%; min-height: 80px; overflow: hidden; display: flex; flex-direction: column; }
-#resp-area { flex: 1; min-height: 80px; overflow: hidden; display: flex; flex-direction: column; }
-#resizer   { height: 5px; background: var(--border); cursor: ns-resize; flex-shrink: 0; transition: background .15s; }
-#resizer:hover { background: var(--accent); }
-
-/* ── TABS (ptabs) ───────────────────────────────────────────── */
-.ptabs {
-  display: flex; align-items: center;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg2);
-  padding: 0 6px; overflow-x: auto; flex-shrink: 0;
-  scrollbar-width: none;
-}
-.ptabs::-webkit-scrollbar { display: none; }
-.ptab {
-  padding: 8px 12px; font-size: 11px; font-weight: 500;
-  color: var(--text3); cursor: pointer; white-space: nowrap;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-  transition: color .15s;
-}
-.ptab:hover  { color: var(--text2); }
-.ptab.active { color: var(--accent); border-bottom-color: var(--accent); }
-.codegen-tab { margin-left: auto; color: var(--accent2); }
-.pbadge { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 700; margin-left: 4px; }
-
-/* ── PANELS ─────────────────────────────────────────────────── */
-.pcontent  { flex: 1; overflow: auto; }
-.tpanel    { display: none; height: 100%; overflow: auto; }
-.tpanel.active { display: block; }
-
-/* ── KV TABLE ───────────────────────────────────────────────── */
-.kv-tbl { width: 100%; border-collapse: collapse; }
-.kv-tbl th {
-  padding: 6px 8px; font-size: 10px; font-weight: 700; letter-spacing: .05em;
-  color: var(--text3); border-bottom: 1px solid var(--border); text-align: left;
-  background: var(--bg2); position: sticky; top: 0; z-index: 1;
-}
-.kv-tbl td { padding: 2px 4px; border-bottom: 1px solid var(--border); }
-.kv-tbl td input { width: 100%; height: 26px; padding: 0 6px; border: none; background: transparent; border-radius: 3px; }
-.kv-tbl td input:focus { background: var(--bg3); border: 1px solid var(--accent); }
-.kv-chk  { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
-.kv-del  { background: none; border: none; color: var(--text3); padding: 2px 6px; font-size: 13px; }
-.kv-del:hover { color: var(--err); }
-.col-chk { width: 28px; }
-.col-del { width: 32px; }
-.col-type{ width: 80px; }
-.add-row-btn {
-  margin: 6px 8px; padding: 4px 10px; border-radius: var(--radius);
-  font-size: 11px; color: var(--accent);
-  border: 1px dashed rgba(124,106,247,.4); transition: all .15s;
-}
-.add-row-btn:hover { background: rgba(124,106,247,.08); border-color: var(--accent); }
-
-/* ── BODY PANEL ─────────────────────────────────────────────── */
-.btype-row { display: flex; gap: 4px; padding: 8px; flex-wrap: wrap; flex-shrink: 0; border-bottom: 1px solid var(--border); }
-.btype-btn { height: 24px; padding: 0 10px; border-radius: 12px; font-size: 11px; color: var(--text3); border: 1px solid var(--border); transition: all .15s; }
-.btype-btn:hover  { border-color: var(--accent); color: var(--accent); }
-.btype-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.body-sub  { height: calc(100% - 44px); overflow: auto; }
-.muted-msg { padding: 20px; color: var(--text3); font-size: 12px; }
-
-.raw-toolbar { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-.raw-toolbar select { height: 26px; padding: 0 20px 0 8px; }
-.code-area  {
-  width: 100%; height: 100%; padding: 10px;
-  font-family: var(--mono); font-size: 12px;
-  resize: none; border: none; border-radius: 0;
-  background: var(--bg); color: var(--text1); line-height: 1.6;
-}
-.code-area:focus { outline: none; box-shadow: none; border: none; }
-
-.fv-type-sel { height: 24px; padding: 0 18px 0 4px; font-size: 11px; }
-
-.gql-wrap { display: grid; grid-template-rows: 1fr auto; height: 100%; }
-.gql-wrap > div { display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
-.gql-wrap textarea { flex: 1; resize: none; }
-.field-label { padding: 4px 8px; font-size: 10px; font-weight: 700; letter-spacing: .05em; color: var(--text3); }
-
-.binary-drop {
-  margin: 20px; border: 2px dashed var(--border2); border-radius: var(--radius2);
-  padding: 40px; text-align: center; cursor: pointer; color: var(--text3);
-  transition: all .2s;
-}
-.binary-drop:hover, .binary-drop.dov { border-color: var(--accent); color: var(--accent); background: rgba(124,106,247,.04); }
-
-/* ── AUTH ───────────────────────────────────────────────────── */
-.auth-type-row { display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid var(--border); }
-.auth-type-sel { height: 30px; padding: 0 24px 0 8px; }
-#auth-fields   { padding: 12px; }
-.af            { margin-bottom: 10px; }
-.af label      { display: block; font-size: 10px; font-weight: 700; color: var(--text3); margin-bottom: 4px; letter-spacing: .05em; }
-.af input, .af select, .af textarea { width: 100%; height: 30px; padding: 0 8px; }
-.af textarea   { height: auto; padding: 8px; }
-.auth-info     { font-size: 11px; color: var(--text3); padding: 8px 0; line-height: 1.6; }
-.auth-info code{ background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); color: var(--accent2); }
-
-/* ── SCRIPTS ────────────────────────────────────────────────── */
-.script-area  { width: 100%; height: 160px; font-family: var(--mono); font-size: 12px; padding: 10px; resize: none; border: none; background: var(--bg); color: var(--text1); line-height: 1.6; }
-.script-refs  { padding: 8px 12px; font-size: 10px; color: var(--text3); line-height: 2; border-top: 1px solid var(--border); background: var(--bg2); }
-.script-refs b{ color: var(--accent2); }
-
-/* ── REQUEST SETTINGS ───────────────────────────────────────── */
-.rsettings-grid { padding: 14px; }
-.s-row  { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.s-label{ font-size: 12px; font-weight: 600; }
-.s-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.s-sec  { margin-bottom: 20px; }
-.s-sec-title { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: var(--text3); margin-bottom: 10px; }
-
-/* ── TOGGLE SWITCH ──────────────────────────────────────────── */
-.toggle { position: relative; display: inline-block; width: 34px; height: 18px; flex-shrink: 0; }
-.toggle input  { opacity: 0; width: 0; height: 0; }
-.t-slider      { position: absolute; inset: 0; background: var(--bg4); border-radius: 18px; cursor: pointer; transition: .25s; border: 1px solid var(--border2); }
-.t-slider::before { content: ''; position: absolute; width: 12px; height: 12px; left: 2px; bottom: 2px; background: var(--text3); border-radius: 50%; transition: .25s; }
-input:checked + .t-slider { background: var(--accent); border-color: var(--accent); }
-input:checked + .t-slider::before { background: #fff; transform: translateX(16px); }
-
-/* ── PATH VARS ──────────────────────────────────────────────── */
-.pv-hint  { padding: 8px 10px; font-size: 11px; color: var(--text3); background: var(--bg2); border-bottom: 1px solid var(--border); }
-.pv-hint code { background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); color: var(--accent2); }
-.pv-empty { padding: 16px; font-size: 11px; color: var(--text3); }
-
-/* ── RESPONSE STATUS BAR ────────────────────────────────────── */
-#resp-status {
-  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
-  background: var(--bg2); border-bottom: 1px solid var(--border);
-  flex-shrink: 0; flex-wrap: wrap;
-}
-.spill  { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; font-family: var(--mono); }
-.s1     { background: rgba(160,160,192,.1); color: var(--text2); }
-.s2     { background: rgba(35,209,139,.1);  color: var(--ok);   }
-.s3     { background: rgba(59,158,255,.1);  color: #3b9eff;     }
-.s4     { background: rgba(229,161,0,.12);  color: var(--warn); }
-.s5     { background: rgba(241,76,76,.1);   color: var(--err);  }
-.smock  { background: rgba(176,108,255,.1); color: #b06cff;     }
-.serr   { background: rgba(241,76,76,.1);   color: var(--err);  }
-.stat   { font-size: 11px; color: var(--text2); }
-.stat b { color: var(--text1); }
-.stat b.slow { color: var(--warn); }
-.stat b.e    { color: var(--err); }
-#r-hint      { font-size: 11px; color: var(--text3); }
-.resp-acts   { display: flex; align-items: center; gap: 5px; margin-left: auto; }
-
-/* NEW — content-type badge in response toolbar */
-.resp-ct-badge {
-  font-size: 10px; font-weight: 700; letter-spacing: .06em;
-  padding: 2px 7px; border-radius: 3px;
-  background: rgba(124,106,247,.12); color: var(--accent2);
-  border: 1px solid rgba(124,106,247,.25);
-  flex-shrink: 0;
-}
-
-/* ── RESPONSE BODY ──────────────────────────────────────────── */
-.body-toolbar {
-  display: flex; align-items: center; gap: 6px; padding: 0 6px 0 0;
-  border-bottom: 1px solid var(--border); background: var(--bg2); flex-shrink: 0;
-}
-.body-view-tabs { flex: 1; }
-.resp-body-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-.rbpanel        { display: none; flex: 1; overflow: auto; }
-.rbpanel.active { display: flex; flex-direction: column; }
-.rbpanel pre {
-  flex: 1; padding: 12px; margin: 0;
-  font-family: var(--mono); font-size: 12px; line-height: 1.7;
-  white-space: pre-wrap; word-break: break-all;
-  color: var(--text1); overflow: auto;
-}
-#resp-preview { width: 100%; flex: 1; border: none; }
-#rbp-preview  { position: relative; }
-#rbp-preview iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
-
-/* JSON / XML syntax highlight */
-.jk { color: #9d8fff; }
-.js { color: #23d18b; }
-.jn { color: #3b9eff; }
-.jb { color: #f0a500; }
-.jl { color: var(--text3); font-style: italic; }
-
-/* ── RESPONSE HEADERS / COOKIES ─────────────────────────────── */
-.rh-tbl    { width: 100%; border-collapse: collapse; }
-.rh-tbl td { padding: 5px 10px; border-bottom: 1px solid var(--border); font-size: 11px; vertical-align: top; }
-.rh-tbl td:first-child  { font-weight: 600; color: var(--accent2); font-family: var(--mono); width: 35%; white-space: nowrap; }
-.rh-tbl td:last-child   { color: var(--text2); word-break: break-all; }
-
-.panel-toolbar   { display: flex; align-items: center; justify-content: flex-end; padding: 4px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.console-toolbar { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-
-.ck-domain    { border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 6px; }
-.ck-domain-nm { font-size: 11px; font-weight: 700; color: var(--accent2); padding: 6px 10px 4px; }
-.ck-row       { display: flex; align-items: center; gap: 8px; padding: 3px 10px; }
-.ck-name      { font-family: var(--mono); font-size: 11px; color: var(--text2); min-width: 100px; }
-.ck-val       { font-family: var(--mono); font-size: 11px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
-
-/* ── TEST RESULTS ───────────────────────────────────────────── */
-.test-summary { display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid var(--border); }
-.tr-item  { display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
-.tr-pass  { background: rgba(35,209,139,.04); }
-.tr-fail  { background: rgba(241,76,76,.04); }
-.tr-icon  { font-size: 14px; flex-shrink: 0; }
-.tr-name  { font-size: 12px; font-weight: 500; }
-.tr-err   { font-size: 11px; color: var(--err); margin-top: 3px; font-family: var(--mono); }
-
-/* ── CONSOLE ────────────────────────────────────────────────── */
-#console-out { padding: 4px 0; font-family: var(--mono); font-size: 11px; }
-.con-row     { display: flex; gap: 8px; padding: 4px 10px; border-bottom: 1px solid var(--border); }
-.con-row.error { background: rgba(241,76,76,.05); }
-.con-row.warn  { background: rgba(229,161,0,.05); }
-.ct { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; flex-shrink: 0; background: var(--bg3); color: var(--text3); text-transform: uppercase; }
-.con-row.error .ct { background: rgba(241,76,76,.15); color: var(--err); }
-.con-row.warn  .ct { background: rgba(229,161,0,.12); color: var(--warn); }
-.con-row.info  .ct { background: rgba(59,158,255,.12); color: #3b9eff; }
-.cm { flex: 1; white-space: pre-wrap; word-break: break-all; color: var(--text2); }
-
-/* ── RTPANEL ────────────────────────────────────────────────── */
-.rtpanel        { display: none; flex: 1; flex-direction: column; overflow: hidden; }
-.rtpanel.active { display: flex; }
-
-/* ── FULLSCREEN OVERLAY ─────────────────────────────────────── */
-.fs-overlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: var(--bg);
-  display: flex; flex-direction: column;
-}
-.fs-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px; border-bottom: 1px solid var(--border);
-  background: var(--bg2); flex-shrink: 0;
-}
-.fs-title   { font-weight: 700; font-size: 13px; }
-.fs-toolbar { display: flex; gap: 4px; }
-.fs-acts    { display: flex; gap: 6px; margin-left: auto; }
-.fs-tab {
-  padding: 5px 12px; border-radius: var(--radius);
-  border: 1px solid var(--border); font-size: 11px; color: var(--text2); transition: all .15s;
-}
-.fs-tab:hover  { border-color: var(--accent); color: var(--accent); }
-.fs-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.fs-body {
-  flex: 1; overflow: auto; position: relative;
-  font-family: var(--mono); font-size: 12px; line-height: 1.7;
-}
-.fs-body pre { padding: 14px; white-space: pre-wrap; word-break: break-all; color: var(--text1); min-height: 100%; }
-.fs-body table { width: 100%; border-collapse: collapse; }
-.fs-body table td { padding: 6px 12px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: top; }
-.fs-body table td:first-child { font-weight: 600; color: var(--accent2); width: 35%; white-space: nowrap; }
-
-/* ── ADVANCED REPEAT POPOVER ────────────────────────────────── */
-.adv-popover {
-  position: fixed; z-index: 300;
-  background: var(--bg2); border: 1px solid var(--border2);
-  border-radius: var(--radius2); padding: 14px;
-  width: 280px; box-shadow: 0 8px 32px rgba(0,0,0,.4);
-}
-.adv-title        { font-weight: 700; font-size: 12px; margin-bottom: 12px; }
-.adv-row          { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12px; }
-.adv-row input    { height: 26px; padding: 0 6px; }
-.adv-progress-wrap{ margin: 8px 0; background: var(--bg3); border-radius: 3px; height: 6px; position: relative; overflow: hidden; }
-.adv-progress-bar { height: 100%; background: var(--ok); border-radius: 3px; transition: width .2s; }
-.adv-progress-txt { position: absolute; right: 0; top: 8px; font-size: 10px; color: var(--text3); }
-.adv-results      { max-height: 160px; overflow-y: auto; margin: 8px 0; }
-.adv-result-row   { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
-.adv-result-num   { color: var(--text3); min-width: 28px; }
-.adv-result-stat  { font-weight: 700; font-family: var(--mono); }
-.adv-result-stat.ok  { color: var(--ok); }
-.adv-result-stat.err { color: var(--err); }
-.adv-result-time  { color: var(--text3); margin-left: auto; }
-.adv-btns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
-
-/* ── NOTIFICATIONS ──────────────────────────────────────────── */
-#notifs {
-  position: fixed; top: 52px; right: 14px; z-index: 400;
-  display: flex; flex-direction: column; gap: 6px; pointer-events: none;
-}
-.notif {
-  padding: 9px 14px; border-radius: var(--radius); font-size: 12px; font-weight: 500;
-  max-width: 320px; animation: slideIn .2s ease;
-  background: var(--bg3); color: var(--text1); border: 1px solid var(--border2);
-  box-shadow: 0 4px 16px rgba(0,0,0,.3);
-}
-.notif.success { background: rgba(35,209,139,.12); border-color: rgba(35,209,139,.3); color: var(--ok); }
-.notif.error   { background: rgba(241,76,76,.12);  border-color: rgba(241,76,76,.3);  color: var(--err); }
-.notif.warn    { background: rgba(229,161,0,.12);  border-color: rgba(229,161,0,.3);  color: var(--warn); }
-@keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-/* ── MODALS ─────────────────────────────────────────────────── */
-#modals { position: fixed; inset: 0; z-index: 500; pointer-events: none; }
-.modal-bg {
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,.55); backdrop-filter: blur(2px);
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: all;
-}
-.modal {
-  background: var(--bg2); border: 1px solid var(--border2);
-  border-radius: var(--radius2); box-shadow: 0 20px 60px rgba(0,0,0,.5);
-  display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
-}
-.modal.sm  { width: 400px; }
-.modal.md  { width: 560px; }
-.modal.lg  { width: 720px; }
-.modal.xl  { width: 900px; }
-.mh { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.mh-title { font-weight: 700; font-size: 14px; flex: 1; }
-.m-close  { color: var(--text3); font-size: 16px; padding: 2px 6px; border-radius: 4px; }
-.m-close:hover { background: var(--bg3); color: var(--err); }
-.mb { flex: 1; overflow-y: auto; padding: 16px; }
-.mf { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
-.fg       { margin-bottom: 12px; }
-.fg label { display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em; color: var(--text3); margin-bottom: 4px; }
-.fg input, .fg select, .fg textarea { width: 100%; height: 30px; padding: 0 8px; }
-.fg textarea { height: auto; padding: 8px; }
-
-/* ── BUTTONS ────────────────────────────────────────────────── */
-.btn {
-  height: 32px; padding: 0 16px; border-radius: var(--radius);
-  font-weight: 600; font-size: 12px; border: 1px solid var(--border); transition: all .15s;
-}
-.btn.primary    { background: var(--accent); color: #fff; border-color: var(--accent); }
-.btn.primary:hover { background: var(--accent2); }
-.btn.secondary  { color: var(--text2); }
-.btn.secondary:hover { background: var(--bg3); color: var(--text1); }
-.btn.danger     { background: rgba(241,76,76,.1); color: var(--err); border-color: rgba(241,76,76,.3); }
-.btn.danger:hover { background: var(--err); color: #fff; }
-.btn-s {
-  height: 26px; padding: 0 10px; border-radius: var(--radius);
-  font-size: 11px; border: 1px solid var(--border); color: var(--text2);
-  transition: all .15s; white-space: nowrap;
-}
-.btn-s:hover  { background: var(--bg3); color: var(--text1); }
-.btn-s.accent { background: rgba(124,106,247,.1); color: var(--accent); border-color: rgba(124,106,247,.3); }
-.btn-s.accent:hover { background: var(--accent); color: #fff; }
-.btn-s.danger { color: var(--err); border-color: rgba(241,76,76,.3); }
-.btn-s.danger:hover { background: var(--err); color: #fff; }
-.btn-enlarge-panel {
-  height: 26px; padding: 0 8px; border-radius: var(--radius);
-  font-size: 13px; color: var(--text3); border: 1px solid var(--border);
-  margin: 4px 6px; transition: all .15s;
-}
-.btn-enlarge-panel:hover { background: var(--bg3); color: var(--text1); border-color: var(--accent); }
-
-/* ── METHOD BADGE ───────────────────────────────────────────── */
-.mbadge          { font-size: 9px; font-weight: 800; letter-spacing: .04em; flex-shrink: 0; min-width: 42px; text-align: center; }
-.mbadge.GET      { color: var(--get);     }
-.mbadge.POST     { color: var(--post);    }
-.mbadge.PUT      { color: var(--put);     }
-.mbadge.PATCH    { color: var(--patch);   }
-.mbadge.DELETE   { color: var(--delete);  }
-.mbadge.HEAD     { color: var(--head);    }
-.mbadge.OPTIONS  { color: var(--options); }
-
-/* ── CODE GEN ───────────────────────────────────────────────── */
-.lang-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
-.lang-tab  { height: 26px; padding: 0 10px; border-radius: 13px; font-size: 11px; border: 1px solid var(--border); color: var(--text2); transition: all .15s; }
-.lang-tab:hover  { border-color: var(--accent); color: var(--accent); }
-.lang-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-#cg-out {
-  width: 100%; height: 340px; font-family: var(--mono); font-size: 12px;
-  padding: 12px; resize: none; background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--text1); line-height: 1.6;
-}
-
-/* ── COLLECTION RUNNER ──────────────────────────────────────── */
-.cr-req-item      { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
-.cr-progress-wrap { height: 4px; background: var(--bg3); border-radius: 2px; margin-bottom: 10px; overflow: hidden; }
-.cr-progress-bar  { height: 100%; background: var(--accent); border-radius: 2px; transition: width .2s; }
-.cr-result-item   { display: flex; align-items: flex-start; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border); }
-.cr-result-item.pass { background: rgba(35,209,139,.04); }
-.cr-result-item.fail { background: rgba(241,76,76,.04); }
-
-/* ── MOCK RULES ─────────────────────────────────────────────── */
-.mock-rule     { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; margin-bottom: 10px; }
-.mock-rule-hdr { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-
-/* ── WEBSOCKET ──────────────────────────────────────────────── */
-.ws-line      { padding: 4px 8px; font-family: var(--mono); font-size: 11px; border-bottom: 1px solid var(--border); }
-.ws-line.sys  { color: var(--text3); font-style: italic; }
-.ws-line.recv { color: var(--ok); }
-.ws-line.sent { color: var(--accent2); }
-
-/* ── MISC ───────────────────────────────────────────────────── */
-code { font-family: var(--mono); }
-.slow { color: var(--warn) !important; }
-.hist-view-btn {
-  font-size: 11px; padding: 2px 5px; border-radius: 3px;
-  border: 1px solid var(--border); color: var(--text2); transition: all .15s;
-}
-.hist-view-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
- 
-.hd-section {
-  border-bottom: 1px solid var(--border);
-}
-.hd-section-title {
-  padding: 8px 16px; font-size: 10px; font-weight: 800;
-  letter-spacing: .07em; color: var(--text3);
-  background: var(--bg3);
-  display: flex; align-items: center; gap: 8px;
-  cursor: pointer; user-select: none;
-}
-.hd-count {
-  font-size: 9px; padding: 1px 6px; border-radius: 8px;
-  background: var(--bg4); color: var(--accent2);
-  font-weight: 700; letter-spacing: 0;
-}
-.hd-section-body {
-  padding: 8px 16px 10px;
-  background: var(--bg);
-}
-.hd-tbl { width: 100%; border-collapse: collapse; }
-.hd-tbl tr { border-bottom: 1px solid var(--border); }
-.hd-tbl tr:last-child { border-bottom: none; }
-.hd-chk  { width: 20px; font-size: 10px; color: var(--ok); padding: 3px 4px; }
-.hd-key  { font-family: var(--mono); font-size: 11px; color: var(--accent2); padding: 3px 8px 3px 0; min-width: 100px; white-space: nowrap; }
-.hd-val  { font-family: var(--mono); font-size: 11px; color: var(--text1); padding: 3px 8px 3px 0; word-break: break-all; }
-.hd-desc { font-size: 10px; color: var(--text3); padding: 3px 0; }
-.hd-empty{ font-size: 11px; color: var(--text3); font-style: italic; }
-.hd-code {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 8px 10px;
-  font-family: var(--mono); font-size: 11px;
-  white-space: pre-wrap; word-break: break-all;
-  color: var(--text1); max-height: 200px; overflow-y: auto;
-  margin-top: 6px; line-height: 1.6;
-}
-.hd-body-type {
-  display: inline-block; font-size: 10px; font-weight: 700;
-  padding: 2px 8px; border-radius: 10px; margin-bottom: 6px;
-  background: rgba(124,106,247,.12); color: var(--accent2);
-  border: 1px solid rgba(124,106,247,.25);
-}
-.hd-sub-label {
-  font-size: 9px; font-weight: 700; color: var(--text3);
-  letter-spacing: .06em; margin-top: 8px; margin-bottom: 3px;
-}
-.hd-auth-row {
-  display: flex; gap: 10px; align-items: baseline;
-  font-size: 11px; padding: 2px 0;
-}
-.hd-auth-lbl { color: var(--text3); min-width: 100px; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
-.hd-auth-val { font-family: var(--mono); color: var(--text1); word-break: break-all; }
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostmanWeb v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ TOPBAR ═══════════════════════════════════════════════ -->
+<div id="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+      <circle cx="12" cy="12" r="10" fill="var(--accent)" opacity=".18"/>
+      <circle cx="12" cy="12" r="5"  fill="var(--accent)" opacity=".35"/>
+      <path d="M12 7v5l3 3" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    PostmanWeb
+  </div>
+  <div class="ws-bar">
+    <select id="ws-sel" onchange="switchWorkspace(this.value)" title="Switch Workspace"></select>
+    <button class="btn-topbar" onclick="openNewWorkspace()" title="New Workspace">＋</button>
+  </div>
+  <div id="tabs"></div>
+  <button id="btn-new-tab" onclick="newTab()" title="New Tab (Ctrl+T)">＋</button>
+  <div class="topbar-right">
+    <button id="cors-btn" onclick="toggleCORS()" title="Toggle CORS Proxy">⚡ CORS: OFF</button>
+    <select id="env-quick" class="env-quick-sel" onchange="quickEnvSwitch(this.value)" title="Active Environment">
+      <option value="">No Environment</option>
+    </select>
+    <button class="btn-topbar" onclick="openGRPC()"       title="gRPC Client">gRPC</button>
+    <button class="btn-topbar" onclick="openWS()"         title="WebSocket">🔌 WS</button>
+    <button class="btn-topbar" onclick="openMockServer()" title="Mock Server">🎭 Mock</button>
+    <button class="btn-topbar" onclick="openImport()"     title="Import">📥</button>
+    <button class="btn-topbar" onclick="toggleTheme()"    title="Toggle Theme" id="theme-btn">🌙</button>
+    <button class="btn-topbar" onclick="openSettings()"   title="Settings">⚙</button>
+  </div>
+</div>
+
+<!-- ═══ MAIN ════════════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- ─── SIDEBAR ──────────────────────────────────────── -->
+  <div id="sidebar">
+    <div class="sb-tabs">
+      <div class="sb-tab active" data-sb="colls"   onclick="switchSB('colls')">COLLS</div>
+      <div class="sb-tab"       data-sb="buckets" onclick="switchSB('buckets')">BUCKETS</div>
+      <div class="sb-tab"       data-sb="history"  onclick="switchSB('history')">HISTORY</div>
+      <div class="sb-tab"       data-sb="envs"     onclick="switchSB('envs')">ENVS</div>
+    </div>
+
+    <!-- COLLECTIONS -->
+    <div class="sb-panel active" id="sbp-colls">
+      <div class="sb-search">
+        <input id="coll-search" type="text" placeholder="Search collections…" oninput="renderCollections()">
+      </div>
+      <div class="sb-actions">
+        <button class="btn-s accent" onclick="openNewColl()">+ New</button>
+        <button class="btn-s"        onclick="openImport()">Import</button>
+        <button class="btn-s"        onclick="exportAllColls()">Export All</button>
+      </div>
+      <div class="sb-list" id="coll-list"></div>
+    </div>
+
+    <!-- BUCKETS (ordered requests + loop — shares 900/s global queue) -->
+    <div class="sb-panel" id="sbp-buckets">
+      <div class="sb-actions">
+        <button class="btn-s accent" onclick="addCurrentToBucket()">📌 Current → bucket</button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);padding:4px 8px;margin:0">Chain requests in order; set loop count and delay. All sends (Send, Attack, Runner, Buckets) share a <strong>900 req/s</strong> cap with automatic queuing.</p>
+      <div class="sb-list" id="bucket-list"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="sb-panel" id="sbp-history">
+      <div class="hist-header">
+        <div class="hist-rec-row">
+          <div class="hist-label">
+            <span class="hrec-dot" id="hist-dot"></span>
+            RECORD HISTORY
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="hist-toggle" onchange="toggleHistRec()" checked>
+            <span class="t-slider"></span>
+          </label>
+        </div>
+        <div class="sb-actions" style="margin-top:4px">
+          <button class="btn-s danger" onclick="clearHistory()">🗑 Clear All</button>
+          <button class="btn-s"        onclick="unpinAllHistory()">📌 Unpin All</button>
+        </div>
+      </div>
+      <div class="sb-list" id="hist-list"></div>
+    </div>
+
+    <!-- ENVIRONMENTS -->
+    <div class="sb-panel" id="sbp-envs">
+      <div class="sb-actions">
+        <button class="btn-s accent" onclick="openNewEnv()">+ New Env</button>
+        <button class="btn-s"        onclick="openGlobals()">🌐 Globals</button>
+      </div>
+      <div class="sb-list" id="env-list"></div>
+    </div>
+  </div>
+
+  <!-- ─── WORKSPACE ─────────────────────────────────────── -->
+  <div id="workspace">
+
+    <!-- URL BAR -->
+    <div id="urlbar">
+      <button class="btn-icon-url" onclick="toggleSB()" title="Toggle Sidebar (Ctrl+\)">☰</button>
+      <select id="method-sel" onchange="colorMethod()">
+        <option value="GET">GET</option>
+        <option value="POST">POST</option>
+        <option value="PUT">PUT</option>
+        <option value="PATCH">PATCH</option>
+        <option value="DELETE">DELETE</option>
+        <option value="HEAD">HEAD</option>
+        <option value="OPTIONS">OPTIONS</option>
+      </select>
+      <div class="url-wrap">
+        <input id="url-in" type="text"
+          placeholder="https://api.example.com  •  http://10.x.x.x:port  •  {{variable}}  •  :pathVar"
+          autocomplete="off" spellcheck="false">
+        <span id="direct-badge" class="direct-badge"
+              title="Private/internal IP — sent DIRECTLY (no proxy)">DIRECT</span>
+      </div>
+      <label class="repeat-wrap" title="Repeat count">
+        <span class="repeat-label">×</span>
+        <input id="send-repeat" type="number" min="1" max="100000" value="1" placeholder="1">
+      </label>
+      <select id="send-repeat-mode" class="send-repeat-mode" title="Queue: one after another. At a time: up to 900 starts per second (next wave next second).">
+        <option value="queue">In queue</option>
+        <option value="burst">At a time</option>
+      </select>
+      <button id="save-btn"   onclick="saveToCollection()" title="Save (Ctrl+S)">💾 Save</button>
+      <button id="cancel-btn" onclick="cancelReq()"        style="display:none" title="Cancel (Esc)">✕ Cancel</button>
+      <button id="send-btn"   onclick="sendRequest()"      title="Send (Ctrl+Enter)">Send ➤</button>
+    </div>
+    <div id="repeat-stats-bar" class="repeat-stats-bar" style="display:none" aria-live="polite">
+      <span id="repeat-st-sent">Sent: 0</span>
+      <span id="repeat-st-ok" class="repeat-st-ok">OK: 0</span>
+      <span id="repeat-st-fail" class="repeat-st-fail">Fail: 0</span>
+      <span id="repeat-st-retry">Retries: 0</span>
+      <span id="repeat-st-q">Queued: 0</span>
+    </div>
+
+    <!-- SPLIT PANE -->
+    <div id="split">
+
+      <!-- REQUEST AREA -->
+      <div id="req-area">
+        <div class="ptabs" id="req-ptabs">
+          <div class="ptab active" data-panel="params"    onclick="switchReqPanel('params')">Params</div>
+          <div class="ptab"        data-panel="pathvars"  onclick="switchReqPanel('pathvars')">Path Variables</div>
+          <div class="ptab"        data-panel="headers"   onclick="switchReqPanel('headers')">Headers</div>
+          <div class="ptab"        data-panel="body"      onclick="switchReqPanel('body')">Body</div>
+          <div class="ptab"        data-panel="auth"      onclick="switchReqPanel('auth')">Auth</div>
+          <div class="ptab"        data-panel="pre"       onclick="switchReqPanel('pre')">Pre-req Script</div>
+          <div class="ptab"        data-panel="tests"     onclick="switchReqPanel('tests')">Tests</div>
+          <div class="ptab"        data-panel="rsettings" onclick="switchReqPanel('rsettings')">Settings</div>
+          <div class="ptab codegen-tab"                   onclick="openCodegen()">{ } Code</div>
+        </div>
+
+        <div class="pcontent" id="req-pcontent">
+
+          <!-- PARAMS -->
+          <div class="tpanel active" id="rp-params">
+            <table class="kv-tbl">
+              <thead><tr><th class="col-chk"></th><th>Key</th><th>Value</th><th>Description</th><th class="col-del"></th></tr></thead>
+              <tbody id="kv-params"></tbody>
+            </table>
+            <button class="add-row-btn" onclick="addKVRow('params')">+ Add Parameter</button>
+          </div>
+
+          <!-- PATH VARIABLES -->
+          <div class="tpanel" id="rp-pathvars">
+            <div class="pv-hint">Auto-extracted from <code>/:param</code> or <code>/{param}</code>. Supports <code>{{variable}}</code>.</div>
+            <table class="kv-tbl">
+              <thead><tr><th>Variable</th><th>Value</th><th>Description</th><th class="col-del"></th></tr></thead>
+              <tbody id="kv-pathvars"></tbody>
+            </table>
+            <div id="pv-empty" class="pv-empty">No path variables detected.</div>
+          </div>
+
+          <!-- HEADERS -->
+          <div class="tpanel" id="rp-headers">
+            <table class="kv-tbl">
+              <thead><tr><th class="col-chk"></th><th>Key</th><th>Value</th><th>Description</th><th class="col-del"></th></tr></thead>
+              <tbody id="kv-headers"></tbody>
+            </table>
+            <button class="add-row-btn" onclick="addKVRow('headers')">+ Add Header</button>
+          </div>
+
+          <!-- BODY -->
+          <div class="tpanel" id="rp-body">
+            <div class="btype-row">
+              <button class="btype-btn active" data-type="none"    onclick="setBody('none')">none</button>
+              <button class="btype-btn"        data-type="form"    onclick="setBody('form')">form-data</button>
+              <button class="btype-btn"        data-type="urlenc"  onclick="setBody('urlenc')">x-www-form-urlencoded</button>
+              <button class="btype-btn"        data-type="raw"     onclick="setBody('raw')">raw</button>
+              <button class="btype-btn"        data-type="binary"  onclick="setBody('binary')">binary</button>
+              <button class="btype-btn"        data-type="graphql" onclick="setBody('graphql')">GraphQL</button>
+            </div>
+            <div id="body-none"    class="body-sub"><p class="muted-msg">No body will be sent with this request.</p></div>
+            <div id="body-form"    class="body-sub" style="display:none">
+              <div class="bulk-kv-toolbar">
+                <button type="button" class="btn-s bulk-mode-btn active" id="btn-form-kv" onclick="setFormBulkMode(false)">Key-Value Edit</button>
+                <button type="button" class="btn-s bulk-mode-btn" id="btn-form-bulk" onclick="setFormBulkMode(true)">Bulk Edit</button>
+                <span class="bulk-hint">One field per line: <code>key=value</code> or <code>key: value</code> · lines starting with <code>#</code> are ignored</span>
+              </div>
+              <div id="form-kv-wrap">
+                <table class="kv-tbl">
+                  <thead><tr><th class="col-chk"></th><th>Key</th><th>Value / File</th><th class="col-type">Type</th><th class="col-del"></th></tr></thead>
+                  <tbody id="kv-form"></tbody>
+                </table>
+                <button type="button" class="add-row-btn" onclick="addFormRow()">+ Add Field</button>
+              </div>
+              <div id="form-bulk-wrap" class="bulk-text-wrap" style="display:none">
+                <textarea id="bulk-form" class="code-area" rows="14" spellcheck="false" placeholder="input_14=Individual Flat&#10;input_21=DONTHULA NITHISH&#10;field=value"></textarea>
+              </div>
+            </div>
+            <div id="body-urlenc" class="body-sub" style="display:none">
+              <div class="bulk-kv-toolbar">
+                <button type="button" class="btn-s bulk-mode-btn active" id="btn-urlenc-kv" onclick="setUrlencBulkMode(false)">Key-Value Edit</button>
+                <button type="button" class="btn-s bulk-mode-btn" id="btn-urlenc-bulk" onclick="setUrlencBulkMode(true)">Bulk Edit</button>
+                <span class="bulk-hint">Same format as form-data bulk</span>
+              </div>
+              <div id="urlenc-kv-wrap">
+                <table class="kv-tbl">
+                  <thead><tr><th class="col-chk"></th><th>Key</th><th>Value</th><th>Description</th><th class="col-del"></th></tr></thead>
+                  <tbody id="kv-urlenc"></tbody>
+                </table>
+                <button type="button" class="add-row-btn" onclick="addKVRow('urlenc')">+ Add Field</button>
+              </div>
+              <div id="urlenc-bulk-wrap" class="bulk-text-wrap" style="display:none">
+                <textarea id="bulk-urlenc" class="code-area" rows="14" spellcheck="false" placeholder="key=value&#10;name: value"></textarea>
+              </div>
+            </div>
+            <div id="body-raw"    class="body-sub" style="display:none">
+              <div class="raw-toolbar">
+                <select id="raw-fmt" onchange="onRawFmtChange()">
+                  <option value="json">JSON</option>
+                  <option value="xml">XML</option>
+                  <option value="html">HTML</option>
+                  <option value="text">Text</option>
+                  <option value="javascript">JavaScript</option>
+                </select>
+                <button class="btn-s" onclick="beautifyRaw()">✨ Beautify</button>
+              </div>
+              <textarea class="code-area" id="code-raw" rows="10" placeholder='{"key": "value"}' spellcheck="false"></textarea>
+            </div>
+            <div id="body-binary" class="body-sub" style="display:none">
+              <div class="binary-drop" id="bin-drop"
+                   onclick="document.getElementById('bin-file').click()"
+                   ondragover="event.preventDefault();this.classList.add('dov')"
+                   ondragleave="this.classList.remove('dov')"
+                   ondrop="handleBinDrop(event)">
+                <input type="file" id="bin-file" style="display:none" onchange="showBinFile(this)">
+                <div id="bin-label">📁 Click to choose file or drag &amp; drop</div>
+              </div>
+            </div>
+            <div id="body-graphql" class="body-sub" style="display:none">
+              <div class="gql-wrap">
+                <div>
+                  <div class="field-label">QUERY</div>
+                  <textarea class="code-area" id="gql-q" rows="7" spellcheck="false" placeholder="query {&#10;  users { id name email }&#10;}"></textarea>
+                </div>
+                <div>
+                  <div class="field-label">VARIABLES (JSON)</div>
+                  <textarea class="code-area" id="gql-v" rows="4" spellcheck="false" placeholder='{"userId": 1}'></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AUTH -->
+          <div class="tpanel" id="rp-auth">
+            <div class="auth-type-row">
+              <div class="field-label">AUTH TYPE</div>
+              <select id="auth-sel" class="auth-type-sel" onchange="renderAuthFields()">
+                <option value="none">No Auth</option>
+                <option value="bearer">Bearer Token</option>
+                <option value="apikey">API Key</option>
+                <option value="basic">Basic Auth</option>
+                <option value="digest">Digest Auth</option>
+                <option value="oauth1">OAuth 1.0</option>
+                <option value="oauth2">OAuth 2.0</option>
+                <option value="hawk">Hawk Auth</option>
+                <option value="aws">AWS Signature V4</option>
+                <option value="ntlm">NTLM</option>
+              </select>
+            </div>
+            <div id="auth-fields"></div>
+          </div>
+
+          <!-- PRE-REQUEST SCRIPT -->
+          <div class="tpanel" id="rp-pre">
+            <textarea class="script-area" id="pre-script" rows="10" spellcheck="false"
+              placeholder="// Pre-request Script&#10;pm.environment.set('token', 'abc123');&#10;pm.globals.set('apiKey', 'xyz');&#10;console.log('URL:', pm.request.url.toString());"></textarea>
+            <div class="script-refs">
+              <b>pm.environment</b>.get/set/unset/has/clear() &nbsp;|&nbsp;
+              <b>pm.globals</b>.get/set/unset/has() &nbsp;|&nbsp;
+              <b>pm.collectionVariables</b>.get/set/unset() &nbsp;|&nbsp;
+              <b>pm.variables</b>.get/set() &nbsp;|&nbsp;
+              <b>pm.request</b>.url/.method/.headers/.body &nbsp;|&nbsp;
+              <b>pm.sendRequest</b>(opts, cb) &nbsp;|&nbsp;
+              <b>console</b>.log/warn/error/info()
+            </div>
+          </div>
+
+          <!-- TEST SCRIPT -->
+          <div class="tpanel" id="rp-tests">
+            <textarea class="script-area" id="test-script" rows="10" spellcheck="false"
+              placeholder="// Test Script&#10;pm.test('Status is 200', () =&gt; pm.response.to.have.status(200));&#10;pm.test('Fast', () =&gt; pm.expect(pm.response.responseTime).to.be.below(1000));&#10;pm.test('Has data', () =&gt; pm.expect(pm.response.json()).to.have.property('data'));"></textarea>
+            <div class="script-refs">
+              <b>pm.test</b>(name, fn) &nbsp;|&nbsp;
+              <b>pm.expect</b>(val).to.equal/.include/.be.below/.have.property/.matchSchema() &nbsp;|&nbsp;
+              <b>pm.response</b>.json()/.text()/.code/.responseTime &nbsp;|&nbsp;
+              <b>pm.response.to.have</b>.status(200)/.header(k) &nbsp;|&nbsp;
+              <b>pm.response.to.be</b>.ok/.json/.success/.error
+            </div>
+          </div>
+
+          <!-- REQUEST SETTINGS -->
+          <div class="tpanel" id="rp-rsettings">
+            <div class="rsettings-grid">
+              <div class="s-row">
+                <div><div class="s-label">Follow Redirects</div><div class="s-desc">Automatically follow HTTP 3xx redirects</div></div>
+                <label class="toggle"><input type="checkbox" id="opt-redirect" checked><span class="t-slider"></span></label>
+              </div>
+              <div class="s-row">
+                <div><div class="s-label">Disable Body</div><div class="s-desc">Send request without body even if configured</div></div>
+                <label class="toggle"><input type="checkbox" id="opt-nobody"><span class="t-slider"></span></label>
+              </div>
+              <div class="s-row">
+                <div><div class="s-label">Use Mock Response</div><div class="s-desc">Return mock if a matching rule exists</div></div>
+                <label class="toggle"><input type="checkbox" id="opt-mock"><span class="t-slider"></span></label>
+              </div>
+              <div style="margin-top:10px">
+                <div class="field-label">REQUEST TIMEOUT (ms)</div>
+                <input type="number" id="opt-timeout" value="30000" style="width:160px">
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /pcontent -->
+      </div><!-- /req-area -->
+
+      <div id="resizer"></div>
+
+      <!-- RESPONSE AREA -->
+      <div id="resp-area">
+        <div id="resp-status">
+          <span id="r-pill"  class="spill" style="display:none"></span>
+          <span id="r-time"  class="stat"  style="display:none"></span>
+          <span id="r-size"  class="stat"  style="display:none"></span>
+          <span id="r-hint">Hit Send to get a response</span>
+          <div id="r-acts" class="resp-acts" style="display:none">
+            <button class="btn-s" onclick="copyResponse()"    title="Copy response body">📋 Copy</button>
+            <button class="btn-s" onclick="saveRespFile()"    title="Save to file">💾 Save</button>
+            <button class="btn-s" id="r-download-btn" onclick="downloadBinaryResp()" style="display:none" title="Download binary">⬇ Download</button>
+            <button class="btn-s" onclick="openEnlargeResp()" title="Enlarge response">⛶ Enlarge</button>
+          </div>
+        </div>
+
+        <div class="ptabs" id="resp-ptabs">
+          <div class="rptab ptab active" data-panel="rbody"    onclick="switchRespPanel('rbody')">Body</div>
+          <div class="rptab ptab"        data-panel="rhdrs"    onclick="switchRespPanel('rhdrs')">Headers</div>
+          <div class="rptab ptab"        data-panel="rcookies" onclick="switchRespPanel('rcookies')">Cookies</div>
+          <div class="rptab ptab"        data-panel="rtests"   onclick="switchRespPanel('rtests')">
+            Test Results <span class="pbadge" id="test-badge" style="display:none">0</span>
+          </div>
+          <div class="rptab ptab" data-panel="rconsole" onclick="switchRespPanel('rconsole')">Console</div>
+        </div>
+
+        <div class="rtpanel active" id="rsp-rbody">
+          <div class="body-toolbar">
+            <div class="ptabs body-view-tabs" style="border-bottom:none;padding:0;background:transparent">
+              <div class="rbview ptab active" data-view="pretty"  onclick="switchRespBody('pretty')">Pretty</div>
+              <div class="rbview ptab"        data-view="raw"     onclick="switchRespBody('raw')">Raw</div>
+              <div class="rbview ptab"        data-view="preview" onclick="switchRespBody('preview')">Preview</div>
+            </div>
+            <span id="resp-ct-badge" class="resp-ct-badge" style="display:none"></span>
+            <button class="btn-enlarge-panel" onclick="openEnlargeResp()" title="Full screen">⛶</button>
+          </div>
+          <div class="resp-body-wrap">
+            <div id="rbp-pretty"  class="rbpanel active"><pre id="resp-pretty"></pre></div>
+            <div id="rbp-raw"     class="rbpanel"><pre id="resp-raw"></pre></div>
+            <div id="rbp-preview" class="rbpanel">
+              <iframe id="resp-preview"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                referrerpolicy="no-referrer"></iframe>
+            </div>
+          </div>
+        </div>
+
+        <div class="rtpanel" id="rsp-rhdrs">
+          <div class="panel-toolbar">
+            <button class="btn-enlarge-panel" onclick="openEnlargePanel('headers')" title="Full screen">⛶</button>
+          </div>
+          <div class="pcontent"><table class="rh-tbl" id="r-headers-tbl"></table></div>
+        </div>
+
+        <div class="rtpanel" id="rsp-rcookies">
+          <div class="panel-toolbar">
+            <button class="btn-enlarge-panel" onclick="openEnlargePanel('cookies')" title="Full screen">⛶</button>
+          </div>
+          <div class="pcontent" id="cookies-out"></div>
+        </div>
+
+        <div class="rtpanel" id="rsp-rtests">
+          <div class="panel-toolbar">
+            <button class="btn-enlarge-panel" onclick="openEnlargePanel('tests')" title="Full screen">⛶</button>
+          </div>
+          <div class="pcontent" id="test-output">
+            <div class="empty-state"><div class="ei">🧪</div><p>Write tests in the Tests tab, then send a request.</p></div>
+          </div>
+        </div>
+
+        <div class="rtpanel" id="rsp-rconsole">
+          <div class="console-toolbar">
+            <button class="btn-s" onclick="clearConsole()">🗑 Clear</button>
+            <button class="btn-enlarge-panel" onclick="openEnlargePanel('console')" title="Full screen" style="margin-left:auto">⛶</button>
+          </div>
+          <div id="console-out"></div>
+        </div>
+
+      </div><!-- /resp-area -->
+    </div><!-- /split -->
+  </div><!-- /workspace -->
+</div><!-- /main -->
+
+<!-- ═══ FULLSCREEN OVERLAY ══════════════════════════════════ -->
+<div id="fs-overlay" class="fs-overlay" style="display:none">
+  <div class="fs-header">
+    <div class="fs-title" id="fs-title">Response Body</div>
+    <div class="fs-toolbar" id="fs-toolbar"></div>
+    <div class="fs-acts">
+      <button class="btn-s" id="fs-copy-btn" onclick="fsAction('copy')">📋 Copy</button>
+      <button class="btn-s" id="fs-save-btn" onclick="fsAction('save')">💾 Save</button>
+      <button class="btn-s danger" onclick="closeEnlarge()" title="Close (Esc)">✕ Close</button>
+    </div>
+  </div>
+  <div class="fs-body" id="fs-body"></div>
+</div>
+
+<!-- ═══ ADVANCED REPEAT POPOVER ════════════════════════════ -->
+<div id="adv-popover" class="adv-popover" style="display:none">
+  <div class="adv-title">Advanced Repeat (Attack)</div>
+  <p style="font-size:10px;color:var(--text3);margin:0 0 8px">Up to 100k repeats · throttled to 900/s · extra waits in queue</p>
+  <div class="adv-row">
+    <label>Repeat count</label>
+    <input type="number" id="adv-count" value="5" min="1" max="100000" style="width:70px">
+  </div>
+  <div class="adv-row">
+    <label>Delay (ms)</label>
+    <input type="number" id="adv-delay" value="0" min="0" style="width:70px">
+  </div>
+  <div class="adv-row">
+    <label>Mode</label>
+    <select id="adv-mode" style="width:120px">
+      <option value="queue">In queue</option>
+      <option value="burst">At a time</option>
+    </select>
+  </div>
+  <div class="adv-progress-wrap" id="adv-pw" style="display:none">
+    <div class="adv-progress-bar" id="adv-pb"></div>
+    <div class="adv-progress-txt" id="adv-pt">0 / 0</div>
+  </div>
+  <div id="adv-results" class="adv-results"></div>
+  <div class="adv-btns">
+    <button class="btn-s" onclick="closeAdvPopover()">Close</button>
+    <button class="btn primary" id="adv-run-btn" onclick="runAdvRepeat()">▶ Run</button>
+  </div>
+</div>
+
+<div id="notifs"></div>
+<div id="modals"></div>
+
+<script src="app1.js"></script>
+<script src="app2.js"></script>
+</body>
+</html>
