@@ -4,17 +4,81 @@
 'use strict';
 
 // ─────────────────────────────────────────────────────────────
+// WORKSPACE BUNDLE (per-workspace collections, envs, history, buckets, tabs)
+// ─────────────────────────────────────────────────────────────
+var PW_WS_DATA = 'pw_ws_data';
+
+function fixHistory(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map(function(h){ return Object.assign({}, h, { pinned: h.pinned === true }); });
+}
+
+function emptyWorkspaceSlice() {
+  return {
+    collections: [],
+    envs: [],
+    activeEnv: null,
+    buckets: [],
+    history: [],
+    tabs: [],
+    activeTabId: null
+  };
+}
+
+function migrateWorkspaceBundleOnce() {
+  if (localStorage.getItem(PW_WS_DATA)) return;
+  var workspaces;
+  try { workspaces = JSON.parse(localStorage.getItem('pw_ws') || '[]'); } catch (e) { workspaces = []; }
+  if (!workspaces.length) workspaces = [{ id: 'ws_default', name: 'My Workspace' }];
+  var aws;
+  try { aws = JSON.parse(localStorage.getItem('pw_aws') || '"ws_default"'); } catch (e2) { aws = 'ws_default'; }
+  if (typeof aws !== 'string') aws = 'ws_default';
+  var bundle = {};
+  workspaces.forEach(function(w) { bundle[w.id] = emptyWorkspaceSlice(); });
+  if (!bundle[aws]) bundle[aws] = emptyWorkspaceSlice();
+  bundle[aws] = {
+    collections: (function(){ try { return JSON.parse(localStorage.getItem('pw_colls') || '[]'); } catch (e) { return []; } })(),
+    envs:        (function(){ try { return JSON.parse(localStorage.getItem('pw_envs') || '[]'); } catch (e) { return []; } })(),
+    activeEnv:   (function(){ try { return JSON.parse(localStorage.getItem('pw_aenv') || 'null'); } catch (e) { return null; } })(),
+    buckets:     (function(){ try { return JSON.parse(localStorage.getItem('pw_buckets') || '[]'); } catch (e) { return []; } })(),
+    history:     fixHistory((function(){ try { return JSON.parse(localStorage.getItem('pw_hist') || '[]'); } catch (e) { return []; } })()),
+    tabs:        [],
+    activeTabId: null
+  };
+  try { localStorage.setItem(PW_WS_DATA, JSON.stringify(bundle)); } catch (e3) {}
+}
+
+migrateWorkspaceBundleOnce();
+
+function load(k, def) {
+  try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }
+  catch(e) { return def; }
+}
+
+function readWorkspaceBundle() {
+  return load(PW_WS_DATA, {});
+}
+
+function readSliceFor(wsId) {
+  var b = readWorkspaceBundle();
+  return Object.assign(emptyWorkspaceSlice(), b[wsId] || {});
+}
+
+var _initWS = load('pw_aws', 'ws_default');
+var _initSlice = readSliceFor(_initWS);
+
+// ─────────────────────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────────────────────
 var S = {
-  tabs:        [],
-  activeId:    null,
+  tabs:        Array.isArray(_initSlice.tabs) ? _initSlice.tabs : [],
+  activeId:    _initSlice.activeTabId || null,
   workspaces:  load('pw_ws',      [{ id:'ws_default', name:'My Workspace' }]),
-  activeWS:    load('pw_aws',     'ws_default'),
-  collections: load('pw_colls',   []),
-  envs:        load('pw_envs',    []),
-  activeEnv:   load('pw_aenv',    null),
-  history:     fixHistory(load('pw_hist', [])),
+  activeWS:    _initWS,
+  collections: _initSlice.collections || [],
+  envs:        _initSlice.envs || [],
+  activeEnv:   _initSlice.activeEnv != null ? _initSlice.activeEnv : null,
+  history:     fixHistory(_initSlice.history || []),
   globals:     load('pw_globals', {}),
   cookies:     load('pw_cookies', {}),
   mocks:       load('pw_mocks',   []),
@@ -24,14 +88,8 @@ var S = {
     historyOn:   true,
     theme:       'dark',
   }),
-  /** Named buckets of request snapshots for looped runs */
-  buckets:     load('pw_buckets', []),
+  buckets:     _initSlice.buckets || [],
 };
-
-function fixHistory(arr) {
-  if (!Array.isArray(arr)) return [];
-  return arr.map(function(h){ return Object.assign({}, h, { pinned: h.pinned === true }); });
-}
 
 var _bodyType    = 'none';
 /** form-data: false = table, true = bulk textarea. Same for urlencoded. */
@@ -52,12 +110,42 @@ var REPEAT_JOB_KEY = 'pw_repeat_job';
 // ─────────────────────────────────────────────────────────────
 // STORAGE
 // ─────────────────────────────────────────────────────────────
-function load(k, def) {
-  try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }
-  catch(e) { return def; }
+function flushWorkspaceBundle() {
+  var bundle = readWorkspaceBundle();
+  if (!bundle[S.activeWS]) bundle[S.activeWS] = emptyWorkspaceSlice();
+  bundle[S.activeWS].collections = S.collections;
+  bundle[S.activeWS].envs = S.envs;
+  bundle[S.activeWS].activeEnv = S.activeEnv;
+  bundle[S.activeWS].buckets = S.buckets || [];
+  bundle[S.activeWS].history = (S.history || []).slice(0, 500);
+  bundle[S.activeWS].tabs = S.tabs;
+  bundle[S.activeWS].activeTabId = S.activeId;
+  localStorage.setItem(PW_WS_DATA, JSON.stringify(bundle));
 }
+
+/** Load workspace slice into memory (after switch). */
+function hydrateWorkspace(wsId) {
+  var sl = readSliceFor(wsId);
+  S.collections = sl.collections || [];
+  S.envs = sl.envs || [];
+  S.activeEnv = sl.activeEnv != null ? sl.activeEnv : null;
+  S.buckets = sl.buckets || [];
+  S.history = fixHistory(sl.history || []);
+  S.tabs = Array.isArray(sl.tabs) && sl.tabs.length ? sl.tabs : [];
+  S.activeId = sl.activeTabId || null;
+  if (!S.tabs.length) {
+    newTab();
+  } else {
+    if (!S.activeId || !S.tabs.some(function(t){ return t.id === S.activeId; })) S.activeId = S.tabs[0].id;
+    renderTabs();
+    var t = getActiveTab();
+    if (t) { loadTabUI(t); showResponse(t.response); }
+  }
+}
+
 function save() {
   try {
+    flushWorkspaceBundle();
     localStorage.setItem('pw_colls',    JSON.stringify(S.collections));
     localStorage.setItem('pw_envs',     JSON.stringify(S.envs));
     localStorage.setItem('pw_aenv',     JSON.stringify(S.activeEnv));
@@ -162,7 +250,7 @@ async function acquireRateSlot() {
       _rateWindow.push(now);
       return;
     }
-    var wait = Math.max(0, 1000 - (now - _rateWindow[0])) + 1;
+    var wait = Math.max(0, 1000 - (now - _rateWindow[0]));
     await sleep(wait);
   }
 }
