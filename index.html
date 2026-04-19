@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>PostmanWeb v4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,6 +23,7 @@
   <div class="ws-bar">
     <select id="ws-sel" onchange="switchWorkspace(this.value)" title="Switch Workspace"></select>
     <button class="btn-topbar" onclick="openNewWorkspace()" title="New Workspace">＋</button>
+    <button class="btn-topbar" onclick="openWorkspaceManager()" title="Workspaces (rename, delete, open)">📂</button>
   </div>
   <div id="tabs"></div>
   <button id="btn-new-tab" onclick="newTab()" title="New Tab (Ctrl+T)">＋</button>
@@ -67,10 +68,12 @@
 
     <!-- BUCKETS (ordered requests + loop — shares 900/s global queue) -->
     <div class="sb-panel" id="sbp-buckets">
+      <div id="bucket-live-hud" class="bucket-live-hud" style="display:none" aria-live="polite"></div>
       <div class="sb-actions">
         <button class="btn-s accent" onclick="addCurrentToBucket()">📌 Current → bucket</button>
+        <button class="btn-s" onclick="createEmptyBucket()">＋ Empty bucket</button>
       </div>
-      <p style="font-size:11px;color:var(--text3);padding:4px 8px;margin:0">Chain requests in order; set loop count and delay. All sends (Send, Attack, Runner, Buckets) share a <strong>900 req/s</strong> cap with automatic queuing.</p>
+      <p class="bucket-hint">Each bucket is a <strong>container</strong> of saved request snapshots. Add the open tab, reorder steps, or remove one. Runs share the <strong>900 req/s</strong> limit.</p>
       <div class="sb-list" id="bucket-list"></div>
     </div>
 
