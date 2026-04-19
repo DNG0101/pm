@@ -1,0 +1,8 @@
+{
+  "name": "postmanweb",
+  "private": true,
+  "description": "Static Postman-style client; run npm test for sanity checks",
+  "scripts": {
+    "test": "node tests/sanity.mjs"
+  }
+}
