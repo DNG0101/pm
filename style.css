@@ -2,7 +2,7 @@
    POSTMANWEB v4 — style.css
    ============================================================ */
 
-/* ── TOKENS ─────────────────────────────────────────────────── -*/
+/* ── TOKENS ─────────────────────────────────────────────────── */
 :root {
   --bg:       #0f0f17;
   --bg2:      #161622;
@@ -351,6 +351,40 @@ select {
 #send-btn         { background: var(--accent); color: #fff; border-color: var(--accent); }
 #send-btn:hover   { background: var(--accent2); }
 #send-btn:disabled{ opacity: .6; cursor: not-allowed; }
+
+.repeat-wrap {
+  display: flex; align-items: center; gap: 2px;
+  flex-shrink: 0;
+  padding: 0 8px 0 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg3);
+  height: 34px;
+}
+.repeat-label { font-size: 13px; color: var(--text3); font-weight: 700; padding-right: 2px; }
+#send-repeat {
+  width: 52px; height: 26px; border: none; background: transparent;
+  text-align: center; font-family: var(--mono); font-size: 12px;
+}
+#send-repeat:focus { box-shadow: none; }
+
+.bulk-kv-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-bottom: 10px; padding: 8px 10px;
+  background: var(--bg3); border-radius: var(--radius); border: 1px solid var(--border);
+}
+.bulk-kv-toolbar .bulk-mode-btn {
+  padding: 5px 12px; border-radius: var(--radius);
+  border: 1px solid var(--border); color: var(--text2); background: var(--bg2);
+}
+.bulk-kv-toolbar .bulk-mode-btn:hover { background: var(--bg4); color: var(--text1); }
+.bulk-kv-toolbar .bulk-mode-btn.active {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.bulk-hint { font-size: 11px; color: var(--text3); flex: 1; min-width: 180px; line-height: 1.35; }
+.bulk-hint code { font-size: 10px; color: var(--accent2); font-family: var(--mono); }
+.bulk-text-wrap { margin-bottom: 8px; }
+.bulk-text-wrap .code-area { width: 100%; font-family: var(--mono); min-height: 200px; }
 
 /* ── SPLIT PANE ─────────────────────────────────────────────── */
 #split     { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
