@@ -46,6 +46,8 @@ var _iterInfo    = { iteration:0, iterationCount:1, dataRow:{} };
 var _lastResponse = null;
 var _advEntry    = null;
 var _advRunning  = false;
+/** Persisted multi-send job for resume after tab close/reload (best-effort; true background needs a server). */
+var REPEAT_JOB_KEY = 'pw_repeat_job';
 
 // ─────────────────────────────────────────────────────────────
 // STORAGE
@@ -167,6 +169,160 @@ async function acquireRateSlot() {
 async function rateLimitedFetch(url, opts) {
   await acquireRateSlot();
   return fetch(url, opts);
+}
+
+function backoffAttempt(n) {
+  return Math.min(8000, 80 * Math.pow(2, Math.min(n, 12)));
+}
+
+/**
+ * Runs executeRequestObject until 2xx success or maxRetries; retries network errors and non-2xx ("rejected") responses.
+ */
+async function executeRequestWithRetry(snapshot, dataRow, opts) {
+  dataRow = dataRow || {};
+  opts = opts || {};
+  var signal = opts.signal;
+  var maxRetries = opts.maxRetries !== undefined ? opts.maxRetries : 999;
+  var retryTotal = opts.retryTotal;
+  var onRetry = opts.onRetry;
+  var n = 0;
+  while (true) {
+    if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
+    var ro;
+    try {
+      ro = await executeRequestObject(snapshot, dataRow, { signal: signal });
+    } catch (e) {
+      if (e && e.name === 'AbortError') throw e;
+      n++;
+      if (retryTotal) retryTotal.v++;
+      if (onRetry) onRetry(n);
+      if (n > maxRetries) throw e;
+      await sleep(backoffAttempt(n));
+      continue;
+    }
+    if (ro.status >= 200 && ro.status < 300) return ro;
+    n++;
+    if (retryTotal) retryTotal.v++;
+    if (onRetry) onRetry(n);
+    if (n > maxRetries) return ro;
+    await sleep(backoffAttempt(n));
+  }
+}
+
+function readRepeatJob() {
+  try {
+    var j = localStorage.getItem(REPEAT_JOB_KEY);
+    return j ? JSON.parse(j) : null;
+  } catch (e) { return null; }
+}
+function writeRepeatJob(job) {
+  try {
+    if (!job) localStorage.removeItem(REPEAT_JOB_KEY);
+    else localStorage.setItem(REPEAT_JOB_KEY, JSON.stringify(job));
+  } catch (e) { /* quota */ }
+}
+function clearRepeatJob() {
+  writeRepeatJob(null);
+}
+
+function updateRepeatStatsBar(o) {
+  var bar = document.getElementById('repeat-stats-bar');
+  if (!bar) return;
+  var sent = document.getElementById('repeat-st-sent');
+  var ok = document.getElementById('repeat-st-ok');
+  var fail = document.getElementById('repeat-st-fail');
+  var ret = document.getElementById('repeat-st-retry');
+  var q = document.getElementById('repeat-st-q');
+  if (sent) sent.textContent = 'Sent: ' + (o.sent != null ? o.sent : 0) + ' / ' + (o.total != null ? o.total : '—');
+  if (ok) ok.textContent = 'OK: ' + (o.success != null ? o.success : 0);
+  if (fail) fail.textContent = 'Fail: ' + (o.failed != null ? o.failed : 0);
+  if (ret) ret.textContent = 'Retries: ' + (o.retries != null ? o.retries : 0);
+  if (q) q.textContent = 'Queued: ' + (o.queued != null ? o.queued : 0);
+}
+
+/**
+ * Shared runner: queue = strict sequential; burst = up to 900 concurrent starts per wave (900/s cap via limiter).
+ */
+async function runRepeatBatch(config) {
+  var snapshot = config.snapshot;
+  var total = config.total;
+  var mode = config.mode === 'burst' ? 'burst' : 'queue';
+  var delayMs = Math.max(0, config.delayMs || 0);
+  var signal = config.signal;
+  var startIndex = Math.max(0, config.startIndex || 0);
+  var rawUrl = config.rawUrl || '';
+  var method = config.method || 'GET';
+  var tab = config.tab;
+  var retryTotal = { v: config.initialRetries || 0 };
+  var success = config.initialSuccess || 0;
+  var failed = config.initialFailed || 0;
+  var persist = config.persist !== false;
+
+  function persistState(done) {
+    if (!persist) return;
+    writeRepeatJob({
+      v: 1,
+      total: total,
+      done: done,
+      success: success,
+      failed: failed,
+      retries: retryTotal.v,
+      mode: mode,
+      snapshot: snapshot,
+      rawUrl: rawUrl,
+      method: method,
+      active: done < total
+    });
+  }
+
+  var lastRo = null;
+  var i = startIndex;
+
+  if (mode === 'queue') {
+    for (; i < total; i++) {
+      if (signal && signal.aborted) break;
+      var ro = await executeRequestWithRetry(snapshot, {}, {
+        signal: signal,
+        retryTotal: retryTotal,
+        onRetry: function() { updateRepeatStatsBar({ total: total, sent: i, success: success, failed: failed, retries: retryTotal.v, queued: total - i }); persistState(i); }
+      });
+      lastRo = ro;
+      if (ro.status >= 200 && ro.status < 300) success++;
+      else failed++;
+      updateRepeatStatsBar({ total: total, sent: i + 1, success: success, failed: failed, retries: retryTotal.v, queued: total - i - 1 });
+      persistState(i + 1);
+      if (delayMs > 0 && i < total - 1) await sleep(delayMs);
+    }
+  } else {
+    while (i < total) {
+      if (signal && signal.aborted) break;
+      var wave = Math.min(MAX_REQUESTS_PER_SECOND, total - i);
+      var slice = [];
+      for (var w = 0; w < wave; w++) slice.push(i + w);
+      var results = await Promise.all(slice.map(function(idx) {
+        return executeRequestWithRetry(snapshot, {}, {
+          signal: signal,
+          retryTotal: retryTotal,
+          onRetry: function() {
+            updateRepeatStatsBar({ total: total, sent: idx, success: success, failed: failed, retries: retryTotal.v, queued: total - idx - 1 });
+            persistState(idx);
+          }
+        }).then(function(ro) { return { idx: idx, ro: ro }; });
+      }));
+      for (var r = 0; r < results.length; r++) {
+        var item = results[r];
+        lastRo = item.ro;
+        if (item.ro.status >= 200 && item.ro.status < 300) success++;
+        else failed++;
+      }
+      i += wave;
+      updateRepeatStatsBar({ total: total, sent: i, success: success, failed: failed, retries: retryTotal.v, queued: total - i });
+      persistState(i);
+      if (delayMs > 0 && i < total) await sleep(delayMs);
+    }
+  }
+
+  return { lastRo: lastRo, success: success, failed: failed, retries: retryTotal.v, aborted: signal && signal.aborted };
 }
 function notify(msg, type) {
   type = type || 'info';
@@ -941,8 +1097,9 @@ function applyPathVarsToUrlString(url, pathVars, dataRow) {
  * Full request execution for history entries, collection items, and bucket snapshots
  * (all body modes except binary file replay).
  */
-async function executeRequestObject(req, dataRow) {
+async function executeRequestObject(req, dataRow, execOpts) {
   dataRow = dataRow || {};
+  execOpts = execOpts || {};
   var method = (req.method || 'GET').toUpperCase();
   var rawUrl = resolveVars(req.url || '', dataRow);
   var url = applyPathVarsToUrlString(rawUrl, req.pathVars, dataRow);
@@ -997,7 +1154,7 @@ async function executeRequestObject(req, dataRow) {
     }
   }
 
-  return fetchDirect(finalUrl, method, headers, body);
+  return fetchDirect(finalUrl, method, headers, body, execOpts && execOpts.signal);
 }
 
 async function signOAuth1(method,url,ck,cs,at,ts,sm){
@@ -1430,11 +1587,12 @@ async function sendRequest() {
 }
 
 // Helper for collection runner / advanced repeat / buckets
-async function fetchDirect(url, method, headers, body) {
+async function fetchDirect(url, method, headers, body, signal) {
   headers=headers||{}; body=body||null;
   var isDirect=isPrivate(url);
   var fu=isDirect?url:(S.settings.corsEnabled?S.settings.proxyUrl+encodeURIComponent(url):url);
   var opts={method:method||'GET',headers:headers};
+  if (signal) opts.signal = signal;
   if(body&&['GET','HEAD'].indexOf((method||'GET').toUpperCase())===-1) opts.body=body;
   if (body instanceof FormData) {
     var nh = {};
